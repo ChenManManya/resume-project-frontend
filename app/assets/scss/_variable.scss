@@ -1,0 +1,128 @@
+// 设计系统变量
+// =========================================
+
+// 颜色系统 - 亮色主题
+$color-primary: #0ea5e9;
+$color-primary-dark: #0284c7;
+$color-primary-light: #38bdf8;
+
+$color-neutral: (
+  50: #fafafa,
+  100: #f5f5f5,
+  200: #e5e5e5,
+  300: #d4d4d4,
+  400: #a3a3a3,
+  500: #737373,
+  600: #525252,
+  700: #404040,
+  800: #262626,
+  900: #171717
+);
+
+// 文字颜色 - 亮色主题
+$color-text-primary: #171717;
+$color-text-secondary: #525252;
+$color-text-tertiary: #737373;
+$color-text-inverse: #fafafa;
+
+// 背景色 - 亮色主题
+$color-bg-primary: #ffffff;
+$color-bg-secondary: #fafafa;
+$color-bg-tertiary: #f5f5f5;
+$color-bg-tertiary-dark: #e8e8e8;  // darken($color-bg-tertiary, 5%)
+$color-bg-hover: #f0f0f0;
+
+// 边框色 - 亮色主题
+$color-border: #e5e5e5;
+$color-border-hover: #d4d4d4;
+$color-border-focus: $color-primary;
+
+// 深色主题变量
+$color-dark-primary: #38bdf8;
+$color-dark-primary-dark: #0ea5e9;
+$color-dark-primary-light: #7dd3fc;
+
+$color-dark-text-primary: #fafafa;
+$color-dark-text-secondary: #a3a3a3;
+$color-dark-text-tertiary: #737373;
+$color-dark-text-inverse: #171717;
+
+$color-dark-bg-primary: #1a1a2e;
+$color-dark-bg-secondary: #0f0f1a;
+$color-dark-bg-tertiary: #252542;
+$color-dark-bg-tertiary-dark: #1f1f38;  // pre-darkened
+$color-dark-bg-hover: #2d2d4a;
+
+$color-dark-border: #333355;
+$color-dark-border-hover: #444466;
+$color-dark-border-focus: $color-dark-primary;
+
+// 阴影 - 亮色主题
+$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+$shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+$shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+$shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+// 深色主题阴影
+$shadow-dark-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+$shadow-dark-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+$shadow-dark-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+$shadow-dark-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+
+// 字体
+$font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+$font-mono: 'JetBrains Mono', monospace;
+
+// 字号
+$font-size-xs: 0.75rem;    // 12px
+$font-size-sm: 0.875rem;   // 14px
+$font-size-base: 1rem;     // 16px
+$font-size-lg: 1.125rem;   // 18px
+$font-size-xl: 1.25rem;    // 20px
+$font-size-2xl: 1.5rem;    // 24px
+$font-size-3xl: 1.875rem;  // 30px
+$font-size-4xl: 2.25rem;   // 36px
+
+// 字重
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 行高
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// 间距
+$spacing-unit: 0.25rem; // 4px
+$spacing-1: 0.25rem;  // 4px
+$spacing-2: 0.5rem;   // 8px
+$spacing-3: 0.75rem;  // 12px
+$spacing-4: 1rem;     // 16px
+$spacing-5: 1.25rem;  // 20px
+$spacing-6: 1.5rem;   // 24px
+$spacing-8: 2rem;     // 32px
+$spacing-10: 2.5rem;  // 40px
+$spacing-12: 3rem;    // 48px
+$spacing-16: 4rem;    // 64px
+
+// 圆角
+$radius-sm: 0.25rem;  // 4px
+$radius-md: 0.5rem;   // 8px
+$radius-lg: 0.75rem;  // 12px
+$radius-xl: 1rem;     // 16px
+$radius-2xl: 1.5rem;  // 24px
+$radius-full: 9999px;
+
+// 过渡
+$transition-fast: 150ms ease;
+$transition-normal: 200ms ease;
+$transition-slow: 300ms ease;
+
+// Z-index
+$z-dropdown: 100;
+$z-sticky: 200;
+$z-modal: 300;
+$z-tooltip: 400;

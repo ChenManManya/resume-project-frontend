@@ -1,0 +1,32 @@
+{
+  "name": "resume-project-frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.11.3",
+    "@wangeditor/editor": "^5.1.23",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "naive-ui": "^2.44.1",
+    "nuxt": "^4.4.2",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.31",
+    "vue-router": "^5.0.4",
+    "vuedraggable": "^4.1.0",
+    "vueuc": "0.4.65"
+  },
+  "packageManager": "pnpm@10.28.0+sha512.05df71d1421f21399e053fde567cea34d446fa02c76571441bfc1c7956e98e363088982d940465fd34480d4d90a0668bc12362f8aa88000a64e83d0b0e47be48",
+  "devDependencies": {
+    "nuxtjs-naive-ui": "^1.0.2",
+    "sass": "^1.99.0",
+    "unplugin-auto-import": "^21.0.0",
+    "unplugin-vue-components": "^32.0.0"
+  }
+}

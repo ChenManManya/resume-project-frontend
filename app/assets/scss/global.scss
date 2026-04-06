@@ -1,0 +1,493 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// 全局样式重置
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+body {
+  font-family: $font-sans;
+  font-size: $font-size-base;
+  line-height: $line-height-normal;
+  color: $color-text-primary;
+  background-color: $color-bg-secondary;
+  min-height: 100vh;
+  transition: background-color $transition-normal, color $transition-normal;
+}
+
+@media print {
+  html,
+  body {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+}
+
+// 深色模式
+.dark body {
+  color: $color-dark-text-primary;
+  background-color: $color-dark-bg-secondary;
+}
+
+// 滚动条样式 - 亮色
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $color-bg-tertiary;
+  border-radius: $radius-full;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: $radius-full;
+  
+  &:hover {
+    background: #a3a3a3;
+  }
+}
+
+// 深色模式滚动条
+.dark ::-webkit-scrollbar-track {
+  background: $color-dark-bg-tertiary;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #525252;
+  
+  &:hover {
+    background: #737373;
+  }
+}
+
+// 选中文本样式
+::selection {
+  background-color: rgba($color-primary, 0.2);
+  color: $color-text-primary;
+}
+
+.dark ::selection {
+  background-color: rgba($color-dark-primary, 0.3);
+  color: $color-dark-text-primary;
+}
+
+// 链接样式
+a {
+  color: $color-primary;
+  text-decoration: none;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $color-primary-dark;
+  }
+}
+
+.dark a {
+  color: $color-dark-primary;
+
+  &:hover {
+    color: $color-dark-primary-light;
+  }
+}
+
+// 图片样式
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+// 列表样式
+ul, ol {
+  list-style: none;
+}
+
+// 输入框重置
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+// 按钮重置
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+// 焦点样式
+:focus-visible {
+  outline: 2px solid $color-primary;
+  outline-offset: 2px;
+}
+
+.dark :focus-visible {
+  outline-color: $color-dark-primary;
+}
+
+// =========================================
+// 深色模式组件样式覆盖
+// =========================================
+
+// App 容器
+.dark #app {
+  background-color: $color-dark-bg-secondary;
+}
+
+// 卡片组件
+.dark .card {
+  background-color: $color-dark-bg-primary;
+  border-color: $color-dark-border;
+  box-shadow: $shadow-dark-sm;
+}
+
+.dark .card--hoverable:hover {
+  box-shadow: $shadow-dark-md;
+  border-color: $color-dark-border-hover;
+}
+
+.dark .card--selected {
+  border-color: $color-dark-primary;
+  box-shadow: 0 0 0 2px rgba($color-dark-primary, 0.2);
+}
+
+// 输入框
+.dark input,
+.dark textarea {
+  color: $color-dark-text-primary;
+  background-color: $color-dark-bg-primary;
+  border-color: $color-dark-border;
+
+  &::placeholder {
+    color: $color-dark-text-tertiary;
+  }
+
+  &:hover {
+    border-color: $color-dark-border-hover;
+  }
+
+  &:focus {
+    border-color: $color-dark-border-focus;
+    box-shadow: 0 0 0 3px rgba($color-dark-primary, 0.2);
+  }
+}
+
+// Select
+.dark select {
+  color: $color-dark-text-primary;
+  background-color: $color-dark-bg-primary;
+  border-color: $color-dark-border;
+}
+
+// Section Card
+.dark .section-card {
+  background-color: $color-dark-bg-primary;
+  border-color: $color-dark-border;
+}
+
+.dark .section-header:hover {
+  background-color: $color-dark-bg-tertiary;
+}
+
+.dark .section-title h3 {
+  color: $color-dark-text-primary;
+}
+
+.dark .section-count {
+  color: $color-dark-text-tertiary;
+}
+
+// Item Card
+.dark .item-card {
+  background-color: $color-dark-bg-tertiary;
+}
+
+.dark .item-header {
+  background-color: rgba($color-dark-primary, 0.1);
+  border-bottom-color: $color-dark-border;
+}
+
+.dark .item-title {
+  color: $color-dark-text-primary;
+}
+
+// Modal
+.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.dark .modal {
+  background-color: $color-dark-bg-primary;
+  border-color: $color-dark-border;
+}
+
+.dark .modal__header {
+  border-bottom-color: $color-dark-border;
+}
+
+.dark .modal__title {
+  color: $color-dark-text-primary;
+}
+
+.dark .modal__footer {
+  border-top-color: $color-dark-border;
+}
+
+// Header
+.dark .header {
+  background: rgba($color-dark-bg-primary, 0.8);
+
+  .logo-text {
+    color: $color-dark-text-primary;
+  }
+}
+
+.dark .back-btn:hover {
+  background-color: $color-dark-bg-tertiary;
+  color: $color-dark-text-primary;
+}
+
+.dark .tab-btn {
+  color: $color-dark-text-secondary;
+
+  &:hover {
+    color: $color-dark-text-primary;
+  }
+
+  &.is-active {
+    background-color: $color-dark-bg-primary;
+    color: $color-dark-text-primary;
+    box-shadow: $shadow-dark-sm;
+  }
+}
+
+.dark .template-tabs {
+  background-color: $color-dark-bg-tertiary;
+}
+
+// Buttons
+.dark .btn--secondary {
+  color: $color-dark-text-primary;
+  border-color: $color-dark-border;
+
+  &:hover:not(:disabled) {
+    background-color: $color-dark-bg-tertiary;
+    border-color: $color-dark-border-hover;
+  }
+}
+
+.dark .btn--ghost {
+  color: $color-dark-text-secondary;
+
+  &:hover:not(:disabled) {
+    background-color: $color-dark-bg-tertiary;
+    color: $color-dark-text-primary;
+  }
+}
+
+// Form elements
+.dark .input-label {
+  color: $color-dark-text-primary;
+}
+
+.dark .textarea-label {
+  color: $color-dark-text-primary;
+}
+
+.dark .select-label {
+  color: $color-dark-text-primary;
+}
+
+.dark .select-arrow {
+  color: $color-dark-text-tertiary;
+}
+
+// Badge
+.dark .badge {
+  background-color: rgba($color-dark-primary, 0.15);
+  color: $color-dark-primary;
+}
+
+// Checkbox
+.dark .checkbox-custom {
+  border-color: $color-dark-border;
+
+  &::after {
+    border-color: white;
+  }
+}
+
+// Editor
+.dark .form-panel {
+  background: $color-dark-bg-secondary;
+}
+
+.dark .preview-panel {
+  background: $color-dark-bg-tertiary;
+}
+
+.dark .editor-header {
+  background: $color-dark-bg-primary;
+  border-bottom-color: $color-dark-border;
+}
+
+// Templates
+.dark .resume-minimal {
+  background: $color-dark-bg-primary;
+  color: $color-dark-text-primary;
+
+  .resume-header {
+    border-bottom-color: $color-dark-border;
+  }
+
+  .contact-line {
+    color: $color-dark-text-tertiary;
+  }
+
+  .section-title {
+    border-bottom-color: $color-dark-border;
+    color: $color-dark-text-tertiary;
+  }
+
+  .skill-tag {
+    background-color: $color-dark-bg-tertiary;
+    color: $color-dark-text-secondary;
+  }
+}
+
+.dark .resume-modern {
+  background: $color-dark-bg-primary;
+
+  .sidebar {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  }
+
+  .sidebar-title {
+    color: rgba(white, 0.5);
+    border-bottom-color: rgba(white, 0.1);
+  }
+
+  .contact-item {
+    color: rgba(white, 0.8);
+  }
+
+  .skill-name {
+    color: rgba(white, 0.9);
+  }
+
+  .skill-bar {
+    background: rgba(white, 0.1);
+  }
+
+  .main-content {
+    color: $color-dark-text-primary;
+  }
+
+  .main-header .name {
+    color: $color-dark-text-primary;
+  }
+
+  .item-header {
+    border-bottom-color: $color-dark-border;
+  }
+
+  .project-card {
+    background: $color-dark-bg-tertiary;
+  }
+}
+
+.dark .resume-creative {
+  background: $color-dark-bg-primary;
+
+  .creative-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  }
+
+  .project-block {
+    background: $color-dark-bg-tertiary;
+  }
+
+  .left-column {
+    border-right-color: $color-dark-border;
+  }
+
+  .exp-block, .edu-block, .cert-block {
+    border-bottom-color: $color-dark-border;
+  }
+
+  .exp-company {
+    color: #818cf8;
+  }
+
+  .edu-degree {
+    color: $color-dark-text-secondary;
+  }
+}
+
+// Home page
+.dark .hero-title {
+  color: $color-dark-text-primary;
+}
+
+.dark .hero-subtitle {
+  color: $color-dark-text-secondary;
+}
+
+.dark .section-title {
+  color: $color-dark-text-primary;
+}
+
+.dark .template-card {
+  background-color: $color-dark-bg-primary;
+  border-color: $color-dark-border;
+
+  &:hover {
+    border-color: $color-dark-border-hover;
+  }
+}
+
+.dark .template-name {
+  color: $color-dark-text-primary;
+}
+
+.dark .template-desc {
+  color: $color-dark-text-secondary;
+}
+
+.dark .template-preview {
+  background: linear-gradient(135deg, $color-dark-bg-tertiary 0%, $color-dark-bg-tertiary-dark 100%);
+}
+
+// Add button
+.dark .add-btn {
+  color: $color-dark-primary;
+}
+
+// Tooltip
+.dark .tooltip {
+  background-color: $color-dark-bg-tertiary;
+  color: $color-dark-text-primary;
+}

@@ -1,0 +1,81 @@
+[
+    {
+        "key": "personal",
+        "component": {
+            "_custom": {
+                "type": "component-definition",
+                "display": "SimplePersonalInfo",
+                "tooltip": "Component definition",
+                "file": "D:/code/resume-project-frontend/app/components/resume/simpleTemplate/SimplePersonalInfo.vue"
+            }
+        },
+        "data": {
+            "name": "张三",
+            "title": "软件工程师",
+            "phone": "138-0000-0000",
+            "email": "zhangsan@example.com",
+            "address": "北京市朝阳区",
+            "photo": "/image.png"
+        }
+    },
+    {
+        "key": "work",
+        "component": {
+            "_custom": {
+                "type": "component-definition",
+                "display": "SimpleCard",
+                "tooltip": "Component definition",
+                "file": "D:/code/resume-project-frontend/app/components/resume/simpleTemplate/SimpleCard.vue"
+            }
+        },
+        "title": "工作经历",
+        "items": [
+            {
+                "id": 1,
+                "title": "软件工程师",
+                "subtitle": "公司A",
+                "content": "负责开发和维护公司核心产品，使用Vue.js和Node.js进行前端和后端开发。",
+                "date": "2020.01 - 2022.12",
+                "location": "北京"
+            },
+            {
+                "id": 2,
+                "title": "前端开发实习生",
+                "subtitle": "公司B",
+                "content": "参与公司官网的重构项目，使用React.js实现响应式设计和交互功能。",
+                "date": "2019.06 - 2019.12",
+                "location": "上海"
+            }
+        ]
+    },
+    {
+        "key": "education",
+        "component": {
+            "_custom": {
+                "type": "component-definition",
+                "display": "SimpleCard",
+                "tooltip": "Component definition",
+                "file": "D:/code/resume-project-frontend/app/components/resume/simpleTemplate/SimpleCard.vue"
+            }
+        },
+        "title": "教育背景",
+        "items": [
+            {
+                "id": 1,
+                "title": "北京大学",
+                "subtitle": "计算机科学与技术 - 硕士",
+                "content": "主修课程：数据结构、算法设计与分析、数据库系统原理等。",
+                "date": "2018.09 - 2020.06",
+                "location": "北京"
+            },
+            {
+                "id": 2,
+                "title": "清华大学",
+                "subtitle": "软件工程 - 本科",
+                "content": "主修课程：软件工程原理、软件项目管理、软件测试等。",
+                "date": "2014.09 - 2018.06",
+                "location": "北京"
+            }
+        ]
+    }
+]
