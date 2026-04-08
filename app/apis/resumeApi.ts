@@ -1,5 +1,6 @@
+import { apiFetch } from '~/utils/http'
 import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
-
+import { useAccessToken } from '~/utils/authStorage'
 export interface ResumeDetailPayload {
   resumeId: number
   currentVersionId: number
@@ -13,10 +14,12 @@ export interface ResumeDetailPayload {
   layoutJson: ResumeLayoutConfig
 }
 
-interface ApiResponse<T> {
-  code: number
-  message: string
-  data: T
+export interface MyResumePayload {
+  id: number
+  title: string
+  templateId: number
+  status: string
+  updateTime: string
 }
 
 interface CreateResumeRequest {
@@ -33,45 +36,36 @@ interface SaveDraftRequest {
   layoutJson: ResumeLayoutConfig
 }
 
-const getApiBase = () => {
-  const config = useRuntimeConfig()
-  return config.public.resumeApiBase as string
-}
-
-const unwrap = async <T>(promise: Promise<ApiResponse<T>>) => {
-  const response = await promise
-  return response.data
-}
-
 export const createResume = (payload: CreateResumeRequest) => {
-  return unwrap(
-    $fetch<ApiResponse<ResumeDetailPayload>>(`${getApiBase()}/resumes`, {
-      method: 'POST',
-      body: payload
-    })
-  )
+  return apiFetch<ResumeDetailPayload>('/resumes', {
+    method: 'POST',
+    body: payload
+  })
 }
 
 export const getResumeDetail = (resumeId: number) => {
-  return unwrap(
-    $fetch<ApiResponse<ResumeDetailPayload>>(`${getApiBase()}/resumes/${resumeId}`)
-  )
+  return apiFetch<ResumeDetailPayload>(`/resumes/${resumeId}`)
 }
 
 export const saveResumeDraft = (resumeId: number, payload: SaveDraftRequest) => {
-  return unwrap(
-    $fetch<ApiResponse<ResumeDetailPayload>>(`${getApiBase()}/resumes/${resumeId}/draft`, {
-      method: 'PUT',
-      body: payload
-    })
-  )
+  return apiFetch<ResumeDetailPayload>(`/resumes/${resumeId}/draft`, {
+    method: 'PUT',
+    body: payload
+  })
 }
 
 const downloadBlob = async (url: string, fileName: string, versionId?: number) => {
+  const { getAccessToken } = useAccessToken()
   const blob = await $fetch<Blob>(url, {
     method: 'POST',
     body: versionId ? { versionId } : {},
-    responseType: 'blob'
+    responseType: 'blob',
+    baseURL: useRuntimeConfig().public.resumeApiBase,
+    headers: getAccessToken()
+      ? {
+          Authorization: `Bearer ${getAccessToken()}`
+        }
+      : undefined
   })
 
   const blobUrl = URL.createObjectURL(blob)
@@ -83,9 +77,14 @@ const downloadBlob = async (url: string, fileName: string, versionId?: number) =
 }
 
 export const exportResumePdf = (resumeId: number, versionId?: number) => {
-  return downloadBlob(`${getApiBase()}/resumes/${resumeId}/export/pdf`, `resume-${resumeId}.pdf`, versionId)
+  return downloadBlob(`/resumes/${resumeId}/export/pdf`, `resume-${resumeId}.pdf`, versionId)
 }
 
 export const exportResumePng = (resumeId: number, versionId?: number) => {
-  return downloadBlob(`${getApiBase()}/resumes/${resumeId}/export/png`, `resume-${resumeId}.png`, versionId)
+  return downloadBlob(`/resumes/${resumeId}/export/png`, `resume-${resumeId}.png`, versionId)
+}
+
+
+export const myResumesList = async () => {
+  return apiFetch<MyResumePayload[]>('/resumes/my')
 }

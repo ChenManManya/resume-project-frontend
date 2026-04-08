@@ -1,20 +1,41 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   ssr: true,
 
   runtimeConfig: {
     public: {
-      resumeApiBase: 'http://localhost:8080/api'
+      resumeApiBase: '/api'
     }
   },
 
-  modules: ['nuxtjs-naive-ui','@pinia/nuxt'],
+  nitro: {
+    devProxy: {
+      '/api': {
+        target: 'http://localhost:8080/',
+        changeOrigin: true,
+        prependPath: false
+      }
+    }
+  },
+
+  modules: ['@pinia/nuxt'],
 
   css: [
     '~/assets/scss/global.scss'
   ],
+
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        verbatimModuleSyntax: true
+      }
+    }
+  },
+
+  build: {
+    transpile: ['naive-ui', "vueuc"]
+  },
 
   vite: {
     css: {
@@ -24,8 +45,11 @@ export default defineNuxtConfig({
         }
       }
     },
+    optimizeDeps: {
+      include: ['naive-ui', 'vueuc'] // 加上 vueuc
+    },
     ssr: {
-      noExternal: ['naive-ui']
+      noExternal: ['vueuc']
     }
   }
 })

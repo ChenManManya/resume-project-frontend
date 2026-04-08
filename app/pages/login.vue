@@ -1,13 +1,72 @@
 <script setup lang="ts">
+import AppTopNav from '~/components/AppTopNav.vue'
+import { useAuthState } from '~/composables/useAuthState'
+import { getCaptcha, login } from '~/apis/authApi'
 const features = [
   '云端自动保存简历内容',
   '一键切换模板与排版预设',
   '支持打印版与后端导出'
 ]
+
+const form = reactive({
+  username: '',
+  password: '',
+  captchaCode: '',
+  captchaKey: ''
+})
+
+const captchaImage = ref('')
+const errorMessage = ref('')
+const loading = ref(false)
+const route = useRoute()
+const authState = useAuthState()
+const { $message } = useNuxtApp()
+
+const refreshCaptcha = async () => {
+  try {
+    const captcha = await getCaptcha()
+    form.captchaKey = captcha.captchaKey
+    form.captchaCode = ''
+    captchaImage.value = captcha.captchaImage ? captcha.captchaImage : ''
+    errorMessage.value = ''
+  } catch (error: any) {
+    errorMessage.value = error?.statusMessage || error?.message || '验证码获取失败，请稍后重试'
+  }
+}
+
+const submitLogin = async () => {
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const loginResult = await login({
+      username: form.username,
+      password: form.password,
+      captchaCode: form.captchaCode,
+      captchaKey: form.captchaKey
+    })
+    if (loginResult.code == 200) {
+      authState.refresh()
+      $message.success('登录成功，正在跳转...')
+      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+      await navigateTo(redirect)
+    }
+    
+  } catch (error: any) {
+    await refreshCaptcha()
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void refreshCaptcha()
+})
 </script>
 
 <template>
   <div class="login-page">
+    <AppTopNav />
     <div class="login-shell">
       <section class="login-hero">
         <NuxtLink class="login-back" to="/">返回首页</NuxtLink>
@@ -31,21 +90,31 @@ const features = [
           <h2>欢迎回来</h2>
         </div>
 
+        <n-alert v-if="errorMessage" type="error" :show-icon="false" class="login-alert">
+          {{ errorMessage }}
+        </n-alert>
+
         <div class="login-form">
           <label>
             <span>手机号 / 邮箱</span>
-            <n-input placeholder="请输入手机号或邮箱" />
+            <n-input v-model:value="form.username" placeholder="请输入手机号或邮箱" />
           </label>
           <label>
             <span>密码</span>
-            <n-input type="password" show-password-on="mousedown" placeholder="请输入密码" />
+            <n-input v-model:value="form.password" type="password" show-password-on="mousedown" placeholder="请输入密码" />
           </label>
-          <div class="login-form__row">
-            <n-checkbox>7天内免登录</n-checkbox>
-            <a href="#">忘记密码</a>
+          <div class="login-captcha-row">
+            <label>
+              <span>验证码</span>
+              <n-input v-model:value="form.captchaCode" placeholder="请输入验证码" />
+            </label>
+            <button class="captcha-box" type="button" @click="refreshCaptcha">
+              <img v-if="captchaImage" :src="captchaImage" alt="验证码" />
+              <span v-else>刷新验证码</span>
+            </button>
           </div>
-          <n-button type="primary" block size="large">登录并继续编辑</n-button>
-          <n-button block size="large">注册新账号</n-button>
+          <n-button type="primary" block size="large" :loading="loading" @click="submitLogin">登录并继续编辑</n-button>
+          <NuxtLink class="register-link-btn" to="/register">注册新账号</NuxtLink>
         </div>
       </section>
     </div>
@@ -55,14 +124,12 @@ const features = [
 <style scoped lang="scss">
 .login-page {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
   background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 28%), linear-gradient(180deg, #f8fbff 0%, #eef2ff 100%);
 }
 
 .login-shell {
+  width: min(1120px, calc(100% - 32px));
+  margin: 32px auto;
   width: min(1120px, 100%);
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) 420px;
@@ -130,6 +197,10 @@ const features = [
   padding: 28px;
 }
 
+.login-alert {
+  margin-bottom: 16px;
+}
+
 .login-card__header {
   margin-bottom: 20px;
 
@@ -149,6 +220,32 @@ const features = [
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.login-captcha-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 12px;
+}
+
+.captcha-box {
+  align-self: end;
+  height: 44px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #fff;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  span {
+    color: #2563eb;
+    font-size: 13px;
+  }
 }
 
 label {
@@ -173,6 +270,17 @@ label {
   }
 }
 
+.register-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: #334155;
+  background: #fff;
+}
+
 @media (max-width: 960px) {
   .login-shell {
     grid-template-columns: 1fr;
@@ -180,6 +288,10 @@ label {
 
   .login-hero h1 {
     font-size: 34px;
+  }
+
+  .login-captcha-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

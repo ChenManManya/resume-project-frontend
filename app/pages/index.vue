@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppTopNav from '~/components/AppTopNav.vue'
 import { computed, ref } from 'vue'
 
 type CategoryId =
@@ -42,13 +43,6 @@ const categories: Stair[] = [
 ]
 
 const quickFilters = ['Java', '前端开发', '实习', '校招', '后端开发', '产品经理']
-
-const headerLinks = [
-  { href: '#hot', label: '简历模板' },
-  { href: '#hot', label: '简历广场' },
-  { href: '#hot', label: '校招信息' },
-  { href: '#common', label: '求职攻略' }
-]
 
 const featuredLanes: FeaturedLane[] = [
   { title: '热门', subtitle: '最常被投递的简历结构', accent: 'linear-gradient(135deg, #fff1ea 0%, #ffe4d6 100%)', icon: '火' },
@@ -137,8 +131,6 @@ const templates: TemplateCard[] = [
 
 const activeCategory = ref<CategoryId>('all')
 const activeTrack = ref<TrackId>('popular')
-const mobileMenuOpen = ref(false)
-
 const filteredTemplates = computed(() => {
   return templates.filter((template) => {
     const matchesCategory =
@@ -168,48 +160,7 @@ const goAnchor = (id: string) => {
 
 <template>
   <div class="home">
-    <header class="header">
-      <div class="header-content">
-        <div class="logo">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="10" fill="#0ea5e9" />
-            <path d="M8 10h16M8 16h12M8 22h8" stroke="white" stroke-width="2" stroke-linecap="round" />
-          </svg>
-          <span class="logo-text">慢慢简历</span>
-        </div>
-
-        <nav class="header-nav">
-          <NuxtLink to="/maker">简历制作</NuxtLink>
-          <a v-for="link in headerLinks" :key="`${link.href}-${link.label}`" :href="link.href">{{ link.label }}</a>
-        </nav>
-
-        <div class="header-actions">
-          <button
-            class="header-menu-toggle"
-            type="button"
-            :aria-expanded="mobileMenuOpen"
-            aria-label="打开导航菜单"
-            @click="mobileMenuOpen = !mobileMenuOpen"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-          <n-button type="primary" size="small">登录/注册</n-button>
-        </div>
-      </div>
-
-      <div v-if="mobileMenuOpen" class="mobile-nav">
-        <a
-          v-for="link in headerLinks"
-          :key="`mobile-${link.href}-${link.label}`"
-          :href="link.href"
-          @click="mobileMenuOpen = false"
-        >
-          {{ link.label }}
-        </a>
-      </div>
-    </header>
+    <AppTopNav />
 
     <main class="main">
       
@@ -397,101 +348,6 @@ const goAnchor = (id: string) => {
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.header {
-  position: sticky;
-  top: 0;
-  z-index: $z-sticky;
-  backdrop-filter: blur(14px);
-  background: rgba(255, 255, 255, 0.82);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: $spacing-4 $spacing-6;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-4;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: $spacing-3;
-
-  &-text {
-    font-size: $font-size-lg;
-    font-weight: $font-weight-semibold;
-    color: $color-text-primary;
-  }
-}
-
-.header-nav {
-  display: flex;
-  align-items: center;
-  gap: $spacing-5;
-
-  a {
-    color: $color-text-secondary;
-    font-size: $font-size-sm;
-  }
-
-  @media (max-width: 680px) {
-    display: none;
-  }
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.header-menu-toggle {
-  display: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.82);
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 4px;
-
-  span {
-    width: 16px;
-    height: 2px;
-    border-radius: 999px;
-    background: $color-text-primary;
-  }
-
-  @media (max-width: 680px) {
-    display: inline-flex;
-  }
-}
-
-.mobile-nav {
-  display: none;
-
-  @media (max-width: 680px) {
-    display: grid;
-    gap: 8px;
-    padding: 0 $spacing-6 $spacing-4;
-
-    a {
-      display: block;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.9);
-      color: $color-text-primary;
-      border: 1px solid rgba(15, 23, 42, 0.06);
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
-    }
-  }
-}
 
 .main {
   max-width: 1280px;

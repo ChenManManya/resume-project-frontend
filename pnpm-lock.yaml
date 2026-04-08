@@ -42,9 +42,6 @@ importers:
         specifier: 0.4.65
         version: 0.4.65(vue@3.5.32(typescript@6.0.2))
     devDependencies:
-      nuxtjs-naive-ui:
-        specifier: ^1.0.2
-        version: 1.0.2(magicast@0.5.2)(vue@3.5.32(typescript@6.0.2))
       sass:
         specifier: ^1.99.0
         version: 1.99.0
@@ -485,10 +482,6 @@ packages:
     peerDependenciesMeta:
       '@vitejs/devtools':
         optional: true
-
-  '@nuxt/kit@3.21.2':
-    resolution: {integrity: sha512-Bd6m6mrDrqpBEbX+g0rc66/ALd1sxlgdx5nfK9MAYO0yKLTOSK7McSYz1KcOYn3LQFCXOWfvXwaqih/b+REI1g==}
-    engines: {node: '>=18.12.0'}
 
   '@nuxt/kit@4.4.2':
     resolution: {integrity: sha512-5+IPRNX2CjkBhuWUwz0hBuLqiaJPRoKzQ+SvcdrQDbAyE+VDeFt74VpSFr5/R0ujrK4b+XnSHUJWdS72w6hsog==}
@@ -2672,9 +2665,6 @@ packages:
       '@types/node':
         optional: true
 
-  nuxtjs-naive-ui@1.0.2:
-    resolution: {integrity: sha512-qJ5ZKTEQieNaSNJFHdRCCz9SOLRB7Rg0vwzFJe64WYKt+SzDM2sQ7ZXj2raJzyIPBtKInQv6yDo2vvSBsLiUHA==}
-
   nypm@0.6.5:
     resolution: {integrity: sha512-K6AJy1GMVyfyMXRVB88700BJqNUkByijGJM8kEHpLdcAt+vSQAVfkWWHYzuRXHSY6xA2sNc5RjTj0p9rE2izVQ==}
     engines: {node: '>=18'}
@@ -4283,32 +4273,6 @@ snapshots:
       - supports-color
       - utf-8-validate
       - vue
-
-  '@nuxt/kit@3.21.2(magicast@0.5.2)':
-    dependencies:
-      c12: 3.3.4(magicast@0.5.2)
-      consola: 3.4.2
-      defu: 6.1.6
-      destr: 2.0.5
-      errx: 0.1.0
-      exsolve: 1.0.8
-      ignore: 7.0.5
-      jiti: 2.6.1
-      klona: 2.0.6
-      knitwork: 1.3.0
-      mlly: 1.8.2
-      ohash: 2.0.11
-      pathe: 2.0.3
-      pkg-types: 2.3.0
-      rc9: 3.0.1
-      scule: 1.3.0
-      semver: 7.7.4
-      tinyglobby: 0.2.15
-      ufo: 1.6.3
-      unctx: 2.5.0
-      untyped: 2.0.0
-    transitivePeerDependencies:
-      - magicast
 
   '@nuxt/kit@4.4.2(magicast@0.5.2)':
     dependencies:
@@ -6596,14 +6560,6 @@ snapshots:
       - vue-tsc
       - xml2js
       - yaml
-
-  nuxtjs-naive-ui@1.0.2(magicast@0.5.2)(vue@3.5.32(typescript@6.0.2)):
-    dependencies:
-      '@css-render/vue3-ssr': 0.15.14(vue@3.5.32(typescript@6.0.2))
-      '@nuxt/kit': 3.21.2(magicast@0.5.2)
-    transitivePeerDependencies:
-      - magicast
-      - vue
 
   nypm@0.6.5:
     dependencies:

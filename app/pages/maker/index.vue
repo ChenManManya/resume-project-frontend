@@ -1,11 +1,15 @@
 <script setup lang="ts">
+definePageMeta({
+  middleware: 'auth'
+})
+
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import WangRichTextField from '~/components/maker/WangRichTextField.client.vue'
 import ResumeBlockRenderer from '~/components/resume/ResumeBlockRenderer.vue'
 import draggable from 'vuedraggable'
 import CardType from '~/enums/cardEnum'
 import { createDefaultResumeLayout, createDefaultResumeModules } from '~/utils/resumeData'
-import { createResume, exportResumePdf, exportResumePng, getResumeDetail, saveResumeDraft, type ResumeDetailPayload } from '~/utils/resumeApi'
+import { createResume, exportResumePdf, exportResumePng, getResumeDetail, saveResumeDraft, type ResumeDetailPayload } from '~/apis/resumeApi'
 import type { ResumeLayoutConfig, ResumeModule, ResumePersonalModule, ResumeSectionModule } from '~/types/resume'
 
 type PageBreak = {
@@ -75,10 +79,6 @@ const editorRefs = reactive(new Map<string, HTMLElement>())
 let resizeObserver: ResizeObserver | null = null
 const route = useRoute()
 const router = useRouter()
-
-definePageMeta({
-  ssr: false
-})
 
 const setEditorRef = (key: string) => (el: Element | null) => {
   if (el instanceof HTMLElement) {
