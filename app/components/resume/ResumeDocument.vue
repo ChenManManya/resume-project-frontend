@@ -1,20 +1,38 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import ResumeBlockRenderer from '~/components/resume/ResumeBlockRenderer.vue'
-import type { ResumeModule } from '~/types/resume'
+import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     modules: ResumeModule[]
+    layout?: ResumeLayoutConfig
     printMode?: boolean
   }>(),
   {
     printMode: false
   }
 )
+
+const paperStyle = computed(() => {
+  if (!props.layout) {
+    return {}
+  }
+
+  return {
+    '--resume-font-family': props.layout.theme.fontFamily,
+    '--resume-title-size': `${props.layout.theme.titleSize}px`,
+    '--resume-body-size': `${props.layout.theme.bodySize}px`,
+    '--resume-line-height': String(props.layout.theme.lineHeight),
+    '--resume-primary-color': props.layout.theme.primaryColor,
+    '--resume-section-gap': `${props.layout.theme.sectionGap}px`,
+    '--resume-page-margin': props.layout.page.margin
+  }
+})
 </script>
 
 <template>
-  <div class="resume-document" :class="{ 'resume-document--print': printMode }">
+  <div class="resume-document" :class="{ 'resume-document--print': printMode }" :style="paperStyle">
     <div class="resume-document__paper">
       <div class="resume-document__content">
         <ResumeBlockRenderer
@@ -31,23 +49,32 @@ withDefaults(
 .resume-document {
   display: flex;
   justify-content: center;
+  --resume-font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  --resume-title-size: 24px;
+  --resume-body-size: 13px;
+  --resume-line-height: 1.7;
+  --resume-primary-color: #2563eb;
+  --resume-section-gap: 20px;
+  --resume-page-margin: 10mm;
 }
 
 .resume-document__paper {
   width: 210mm;
   min-height: 297mm;
   margin: 20px auto;
-  padding: 10mm;
+  padding: var(--resume-page-margin);
   background: #fff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  font-family: var(--resume-font-family);
 }
 
 .resume-document__content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--resume-section-gap);
   width: 100%;
-  font-size: 13px;
+  font-size: var(--resume-body-size);
+  line-height: var(--resume-line-height);
 }
 
 .resume-document--print .resume-document__paper {

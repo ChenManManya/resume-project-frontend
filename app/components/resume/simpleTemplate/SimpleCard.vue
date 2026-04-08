@@ -129,13 +129,13 @@ const cardDisplayConfig = computed(() => {
         flex-shrink: 0;
         width: 0;
         height: 1em;
-        border-left: 4px solid #2563eb;
+        border-left: 4px solid var(--resume-primary-color, #2563eb);
         border-radius: 2px;
     }
 
     > span {
         display: inline-block;
-        font-size: 16px;
+        font-size: calc(var(--resume-body-size, 13px) + 3px);
         line-height: 1;
         font-weight: 700;
         color: #111827;
@@ -146,7 +146,7 @@ const cardDisplayConfig = computed(() => {
     margin-top: 10px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: calc(var(--resume-section-gap, 20px) * 0.8);
 }
 
 .card-content-item-header {
@@ -165,7 +165,7 @@ const cardDisplayConfig = computed(() => {
         overflow-wrap: break-word;
         margin: 0px;
         font-weight: bold;
-        font-size: 15px;
+        font-size: calc(var(--resume-body-size, 13px) + 2px);
     }
 
     &--education {
@@ -191,13 +191,13 @@ const cardDisplayConfig = computed(() => {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    font-size: 13px;
+    font-size: var(--resume-body-size, 13px);
     color: #6b7280;
 }
 
 .card-content-item-header-major, .card-content-item-header-degree, .card-content-item-header-role {
 
-    font-size: 13px;
+    font-size: var(--resume-body-size, 13px);
     color: #6b7280;
 }
 
@@ -208,7 +208,7 @@ const cardDisplayConfig = computed(() => {
 }
 
 .card-content-item-content {
-    line-height: 1.75;
+    line-height: var(--resume-line-height, 1.7);
     color: #111827;
 
     :deep(p) {

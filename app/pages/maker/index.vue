@@ -4,9 +4,9 @@ import WangRichTextField from '~/components/maker/WangRichTextField.client.vue'
 import ResumeBlockRenderer from '~/components/resume/ResumeBlockRenderer.vue'
 import draggable from 'vuedraggable'
 import CardType from '~/enums/cardEnum'
-import { createDefaultResumeModules } from '~/utils/resumeData'
-import { buildResumePrintRoute } from '~/utils/resumePrintRoute'
-import type { ResumeCardItem, ResumeModule, ResumePersonalModule, ResumeSectionModule } from '~/types/resume'
+import { createDefaultResumeLayout, createDefaultResumeModules } from '~/utils/resumeData'
+import { createResume, exportResumePdf, exportResumePng, getResumeDetail, saveResumeDraft, type ResumeDetailPayload } from '~/utils/resumeApi'
+import type { ResumeLayoutConfig, ResumeModule, ResumePersonalModule, ResumeSectionModule } from '~/types/resume'
 
 type PageBreak = {
   id: string
@@ -17,14 +17,64 @@ type PageBreak = {
 const moduleList = ref<ResumeModule[]>(createDefaultResumeModules())
 const railCollapsed = ref(false)
 const selectedModuleKey = ref<string>('personal')
-const expandedKeys = ref<string[]>(['personal'])
+const expandedKeys = ref<string[]>(['layout', 'personal'])
 const hiddenModuleKeys = ref<string[]>([])
 const photoInputRef = ref<HTMLInputElement | null>(null)
+const layoutConfig = ref<ResumeLayoutConfig>(createDefaultResumeLayout())
+const resumeId = ref<number | null>(null)
+const currentVersionId = ref<number | null>(null)
+const resumeTitle = ref('未命名简历')
+const templateId = ref(1)
+const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+const isBootstrapping = ref(true)
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+const exportOptions = [
+  { label: '导出 PDF', key: 'pdf' },
+  { label: '导出 PNG', key: 'png' }
+]
+const colorPalette = ['#2563eb', '#0f766e', '#7c3aed', '#dc2626', '#ea580c', '#111827']
+const layoutPresets = [
+  {
+    key: 'compact',
+    label: '紧凑型',
+    config: {
+      titleSize: 22,
+      bodySize: 12,
+      lineHeight: 1.5,
+      sectionGap: 16,
+      primaryColor: '#2563eb'
+    }
+  },
+  {
+    key: 'balanced',
+    label: '标准型',
+    config: {
+      titleSize: 24,
+      bodySize: 13,
+      lineHeight: 1.7,
+      sectionGap: 20,
+      primaryColor: '#2563eb'
+    }
+  },
+  {
+    key: 'spacious',
+    label: '舒展型',
+    config: {
+      titleSize: 26,
+      bodySize: 14,
+      lineHeight: 1.9,
+      sectionGap: 24,
+      primaryColor: '#0f766e'
+    }
+  }
+]
 
 const previewRef = ref<HTMLElement | null>(null)
 const previewMetrics = ref<{ breaks: PageBreak[] }>({ breaks: [] })
 const editorRefs = reactive(new Map<string, HTMLElement>())
 let resizeObserver: ResizeObserver | null = null
+const route = useRoute()
+const router = useRouter()
 
 definePageMeta({
   ssr: false
@@ -66,6 +116,42 @@ const visibleModuleList = computed<ResumeModule[]>({
 })
 
 const pageBreaks = computed(() => previewMetrics.value.breaks)
+
+const previewPaperStyle = computed(() => ({
+  '--resume-font-family': layoutConfig.value.theme.fontFamily,
+  '--resume-title-size': `${layoutConfig.value.theme.titleSize}px`,
+  '--resume-body-size': `${layoutConfig.value.theme.bodySize}px`,
+  '--resume-line-height': String(layoutConfig.value.theme.lineHeight),
+  '--resume-primary-color': layoutConfig.value.theme.primaryColor,
+  '--resume-section-gap': `${layoutConfig.value.theme.sectionGap}px`,
+  '--resume-page-margin': layoutConfig.value.page.margin
+}))
+
+const applyLayoutPreset = (presetKey: string) => {
+  const preset = layoutPresets.find((item) => item.key === presetKey)
+
+  if (!preset) {
+    return
+  }
+
+  layoutConfig.value = {
+    ...layoutConfig.value,
+    theme: {
+      ...layoutConfig.value.theme,
+      ...preset.config
+    }
+  }
+}
+
+const setPrimaryColor = (color: string) => {
+  layoutConfig.value = {
+    ...layoutConfig.value,
+    theme: {
+      ...layoutConfig.value.theme,
+      primaryColor: color
+    }
+  }
+}
 
 const isExpanded = (key: string) => expandedKeys.value.includes(key)
 
@@ -290,13 +376,94 @@ const removeSectionItem = (moduleKey: string, itemId: number) => {
   module.items = module.items.filter((item) => item.id !== itemId)
 }
 
-const openPrintPage = () => {
-  if (!import.meta.client) {
+const applyResumePayload = (payload: ResumeDetailPayload) => {
+  resumeId.value = payload.resumeId
+  currentVersionId.value = payload.currentVersionId
+  resumeTitle.value = payload.title
+  templateId.value = payload.templateId
+  moduleList.value = payload.contentJson.modules
+  layoutConfig.value = payload.layoutJson
+  hiddenModuleKeys.value = payload.layoutJson.hiddenModuleKeys ?? []
+
+  const order = payload.layoutJson.moduleOrder ?? []
+  if (order.length > 0) {
+    const orderMap = new Map(order.map((key, index) => [key, index]))
+    moduleList.value = [...moduleList.value].sort((a, b) => {
+      const aIndex = orderMap.get(a.key) ?? Number.MAX_SAFE_INTEGER
+      const bIndex = orderMap.get(b.key) ?? Number.MAX_SAFE_INTEGER
+      return aIndex - bIndex
+    })
+  }
+
+  const firstVisible = moduleList.value.find((module) => !hiddenModuleKeys.value.includes(module.key))
+  selectedModuleKey.value = firstVisible?.key ?? 'personal'
+}
+
+const createOrLoadResume = async () => {
+  const queryResumeId = Number(route.query.resumeId)
+
+  if (Number.isFinite(queryResumeId) && queryResumeId > 0) {
+    const detail = await getResumeDetail(queryResumeId)
+    applyResumePayload(detail)
     return
   }
 
-  const route = buildResumePrintRoute(visibleModules.value)
-  window.open(route, '_blank', 'noopener,noreferrer')
+  const created = await createResume({
+    templateId: templateId.value,
+    title: resumeTitle.value
+  })
+
+  applyResumePayload(created)
+
+  await router.replace({
+    query: {
+      ...route.query,
+      resumeId: String(created.resumeId)
+    }
+  })
+}
+
+const persistDraft = async () => {
+  if (!resumeId.value) {
+    return
+  }
+
+  saveState.value = 'saving'
+
+  try {
+    const saved = await saveResumeDraft(resumeId.value, {
+      title: resumeTitle.value,
+      templateId: templateId.value,
+      contentJson: {
+        modules: moduleList.value
+      },
+      layoutJson: {
+        ...layoutConfig.value,
+        moduleOrder: moduleList.value.map((module) => module.key),
+        hiddenModuleKeys: hiddenModuleKeys.value
+      }
+    })
+
+    currentVersionId.value = saved.currentVersionId
+    saveState.value = 'saved'
+  } catch {
+    saveState.value = 'error'
+  }
+}
+
+const handleExport = async (key: string) => {
+  if (!resumeId.value) {
+    return
+  }
+
+  if (key === 'pdf') {
+    await exportResumePdf(resumeId.value, currentVersionId.value ?? undefined)
+    return
+  }
+
+  if (key === 'png') {
+    await exportResumePng(resumeId.value, currentVersionId.value ?? undefined)
+  }
 }
 
 const updatePreviewMetrics = () => {
@@ -338,6 +505,8 @@ const updatePreviewMetrics = () => {
 }
 
 onMounted(async () => {
+  await createOrLoadResume()
+  isBootstrapping.value = false
   await nextTick()
   updatePreviewMetrics()
 
@@ -351,6 +520,11 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+
   resizeObserver?.disconnect()
   resizeObserver = null
 
@@ -372,6 +546,24 @@ watch(hiddenModuleKeys, async () => {
   await nextTick()
   updatePreviewMetrics()
 })
+
+watch(
+  [moduleList, layoutConfig, hiddenModuleKeys, resumeTitle],
+  () => {
+    if (isBootstrapping.value || !resumeId.value) {
+      return
+    }
+
+    if (saveTimer) {
+      clearTimeout(saveTimer)
+    }
+
+    saveTimer = setTimeout(() => {
+      void persistDraft()
+    }, 800)
+  },
+  { deep: true }
+)
 </script>
 
 <template>
@@ -379,13 +571,18 @@ watch(hiddenModuleKeys, async () => {
     <header class="maker-topbar">
       <div>
         <p class="maker-topbar__eyebrow">我的简历</p>
-        <h1>简洁专业简历模板工作台</h1>
+        <h1>{{ resumeTitle }}</h1>
       </div>
       <div class="maker-topbar__actions">
+        <span class="maker-save-state" :class="`is-${saveState}`">
+          {{ saveState === 'saving' ? '保存中...' : saveState === 'saved' ? '已保存' : saveState === 'error' ? '保存失败' : '未保存' }}
+        </span>
         <n-button quaternary @click="railCollapsed = !railCollapsed">
           {{ railCollapsed ? '展开板块' : '收起板块' }}
         </n-button>
-        <n-button type="primary" @click="openPrintPage">打印版预览</n-button>
+        <n-dropdown trigger="click" :options="exportOptions" @select="handleExport">
+          <n-button type="primary">导出</n-button>
+        </n-dropdown>
       </div>
     </header>
 
@@ -433,6 +630,7 @@ watch(hiddenModuleKeys, async () => {
         <div class="editor-panel__header">
           <div>
             <span class="editor-panel__eyebrow">内容编辑</span>
+            <h2>模块内容与排版参数都可以在这里调整。</h2>
           </div>
         </div>
 
@@ -578,13 +776,68 @@ watch(hiddenModuleKeys, async () => {
 
       <section class="preview-panel">
         <div class="preview-panel__toolbar">
-          <div>
+          <div class="preview-panel__heading">
             <span class="preview-panel__eyebrow">实时预览</span>
+            <h2>模板排版</h2>
+          </div>
+          <div class="preview-layout-toolbar">
+            <div class="preview-layout-toolbar__presets">
+              <span>预设</span>
+              <div class="preview-layout-toolbar__preset-list">
+                <button
+                  v-for="preset in layoutPresets"
+                  :key="preset.key"
+                  type="button"
+                  class="preset-chip"
+                  @click="applyLayoutPreset(preset.key)"
+                >
+                  {{ preset.label }}
+                </button>
+              </div>
+            </div>
+            <label>
+              <span>字体</span>
+              <n-input v-model:value="layoutConfig.theme.fontFamily" />
+            </label>
+            <div class="preview-layout-toolbar__palette">
+              <span>主色</span>
+              <div class="preview-layout-toolbar__palette-list">
+                <button
+                  v-for="color in colorPalette"
+                  :key="color"
+                  type="button"
+                  class="color-dot"
+                  :class="{ 'is-active': layoutConfig.theme.primaryColor === color }"
+                  :style="{ background: color }"
+                  @click="setPrimaryColor(color)"
+                />
+              </div>
+            </div>
+            <label>
+              <span>标题</span>
+              <n-input-number v-model:value="layoutConfig.theme.titleSize" :min="18" :max="36" />
+            </label>
+            <label>
+              <span>正文</span>
+              <n-input-number v-model:value="layoutConfig.theme.bodySize" :min="11" :max="18" />
+            </label>
+            <label>
+              <span>行高</span>
+              <n-input-number v-model:value="layoutConfig.theme.lineHeight" :min="1.2" :max="2.2" :step="0.1" />
+            </label>
+            <label>
+              <span>间距</span>
+              <n-input-number v-model:value="layoutConfig.theme.sectionGap" :min="8" :max="40" />
+            </label>
+            <label>
+              <span>页边距</span>
+              <n-input v-model:value="layoutConfig.page.margin" placeholder="10mm" />
+            </label>
           </div>
         </div>
 
         <div class="preview-canvas">
-          <div ref="previewRef" class="preview-paper">
+          <div ref="previewRef" class="preview-paper" :style="previewPaperStyle">
             <div
               v-for="item in pageBreaks"
               :key="item.id"
@@ -652,7 +905,25 @@ watch(hiddenModuleKeys, async () => {
 
 .maker-topbar__actions {
   display: flex;
+  align-items: center;
   gap: 12px;
+}
+
+.maker-save-state {
+  font-size: 13px;
+  color: #64748b;
+
+  &.is-saving {
+    color: #2563eb;
+  }
+
+  &.is-saved {
+    color: #16a34a;
+  }
+
+  &.is-error {
+    color: #dc2626;
+  }
 }
 
 .maker-shell {
@@ -823,11 +1094,76 @@ watch(hiddenModuleKeys, async () => {
 .preview-panel__toolbar {
   margin-bottom: 18px;
 
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
   h2 {
     margin: 4px 0 0;
     font-size: 18px;
     line-height: 1.4;
     color: #111827;
+  }
+}
+
+.preview-panel__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-layout-toolbar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+
+  label {
+    gap: 6px;
+  }
+
+  span {
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+.preview-layout-toolbar__presets,
+.preview-layout-toolbar__palette {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preview-layout-toolbar__preset-list,
+.preview-layout-toolbar__palette-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preset-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+}
+
+.color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.24);
+
+  &.is-active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
   }
 }
 
@@ -1060,6 +1396,10 @@ label {
   .preview-panel {
     grid-column: 1 / -1;
   }
+
+  .preview-layout-toolbar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -1095,6 +1435,10 @@ label {
   .preview-paper {
     width: 100%;
     min-height: auto;
+  }
+
+  .preview-layout-toolbar {
+    grid-template-columns: 1fr;
   }
 }
 </style>

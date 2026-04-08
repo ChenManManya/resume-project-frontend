@@ -1,5 +1,23 @@
 import CardType from '~/enums/cardEnum'
-import type { ResumeModule } from '~/types/resume'
+import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
+
+export const createDefaultResumeLayout = (): ResumeLayoutConfig => ({
+  moduleOrder: ['personal', 'education-advanced', 'work', 'project', 'skills', 'introduction'],
+  hiddenModuleKeys: [],
+  theme: {
+    templateCode: 'simple',
+    fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif',
+    titleSize: 24,
+    bodySize: 13,
+    lineHeight: 1.7,
+    primaryColor: '#2563eb',
+    sectionGap: 20
+  },
+  page: {
+    size: 'A4',
+    margin: '10mm'
+  }
+})
 
 export const createDefaultResumeModules = (): ResumeModule[] => [
   {

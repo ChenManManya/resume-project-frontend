@@ -4,6 +4,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: true,
 
+  runtimeConfig: {
+    public: {
+      resumeApiBase: 'http://localhost:8080/api'
+    }
+  },
+
   modules: ['nuxtjs-naive-ui','@pinia/nuxt'],
 
   css: [

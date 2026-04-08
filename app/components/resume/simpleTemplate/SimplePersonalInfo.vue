@@ -91,13 +91,17 @@ const props = withDefaults(
 
     > .name {
         font-weight: 700;
+        font-size: var(--resume-title-size, 24px);
+        line-height: 1.15;
+        color: #111827;
         word-break: break-word;
         overflow-wrap: break-word;
     }
 
     > .title {
-        font-size: 15px;
+        font-size: calc(var(--resume-body-size, 13px) + 2px);
         letter-spacing: 0.02em;
+        color: var(--resume-primary-color, #2563eb);
     }
 }
 
@@ -112,8 +116,8 @@ const props = withDefaults(
     display: flex;
     align-items: baseline;
     gap: 8px;
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: var(--resume-body-size, 13px);
+    line-height: var(--resume-line-height, 1.6);
     color: #374151;
     word-break: break-word;
     overflow-wrap: break-word;

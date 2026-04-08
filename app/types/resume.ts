@@ -1,5 +1,27 @@
 import type CardType from '~/enums/cardEnum'
 
+export interface ResumeLayoutTheme {
+  templateCode: string
+  fontFamily: string
+  titleSize: number
+  bodySize: number
+  lineHeight: number
+  primaryColor: string
+  sectionGap: number
+}
+
+export interface ResumeLayoutPage {
+  size: 'A4'
+  margin: string
+}
+
+export interface ResumeLayoutConfig {
+  moduleOrder: string[]
+  hiddenModuleKeys: string[]
+  theme: ResumeLayoutTheme
+  page: ResumeLayoutPage
+}
+
 export interface ResumePersonalInfo {
   name: string
   title: string
