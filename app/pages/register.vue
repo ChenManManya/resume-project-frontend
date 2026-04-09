@@ -15,25 +15,26 @@ const captchaImage = ref('')
 const errorMessage = ref('')
 const loading = ref(false)
 const authState = useAuthState()
-
+const { $message } = useNuxtApp()
 const refreshCaptcha = async () => {
   try {
-    const captcha = await getCaptcha()
-    form.captchaKey = captcha.captchaKey
+    const {data, error} = await getCaptcha()
+    form.captchaKey = data.value.captchaKey
     form.captchaCode = ''
-    captchaImage.value = captcha.captchaImage
+    captchaImage.value = data.value.captchaImage
     errorMessage.value = ''
   } catch (error: any) {
-    errorMessage.value = error?.statusMessage || error?.message || '验证码获取失败，请稍后重试'
+    errorMessage.value = error?.message || '验证码获取失败，请稍后重试'
   }
 }
 
 const submitRegister = async () => {
+  
   loading.value = true
   errorMessage.value = ''
 
   try {
-    await register({
+    const { data, error } = await register({
       username: form.username,
       password: form.password,
       email: form.email,
@@ -41,11 +42,16 @@ const submitRegister = async () => {
       captchaKey: form.captchaKey
     })
 
+    if (error.value) {
+      $message.warning(error.value || '注册失败，请检查输入内容')
+      await refreshCaptcha()
+      return
+    }
+    $message.success('注册成功，正在跳转到登录页面...')
     authState.refresh()
-
     await navigateTo('/login')
   } catch (error: any) {
-    errorMessage.value = error?.statusMessage || error?.message || '注册失败，请检查输入内容'
+    errorMessage.value = error?.message || '注册失败，请检查输入内容'
     await refreshCaptcha()
   } finally {
     loading.value = false

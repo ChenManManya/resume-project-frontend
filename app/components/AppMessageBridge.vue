@@ -3,7 +3,6 @@ import { useMessage } from 'naive-ui'
 
 const message = useMessage()
 const nuxtApp = useNuxtApp()
-// window.$message = message
 nuxtApp.provide('message', message)
 </script>
 

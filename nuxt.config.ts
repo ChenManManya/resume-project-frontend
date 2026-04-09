@@ -1,3 +1,6 @@
+import Components from 'unplugin-vue-components/vite'
+import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
@@ -21,9 +24,7 @@ export default defineNuxtConfig({
 
   modules: ['@pinia/nuxt'],
 
-  css: [
-    '~/assets/scss/global.scss'
-  ],
+  css: ['~/assets/scss/global.scss'],
 
   typescript: {
     tsConfig: {
@@ -34,10 +35,16 @@ export default defineNuxtConfig({
   },
 
   build: {
-    transpile: ['naive-ui', "vueuc"]
+    transpile: ['naive-ui', 'vueuc']
   },
 
   vite: {
+    plugins: [
+      Components({
+        resolvers: [NaiveUiResolver()]
+      })
+    ],
+
     css: {
       preprocessorOptions: {
         scss: {
@@ -45,11 +52,13 @@ export default defineNuxtConfig({
         }
       }
     },
+
     optimizeDeps: {
-      include: ['naive-ui', 'vueuc'] // 加上 vueuc
+      include: ['naive-ui', 'vueuc', '@css-render/vue3-ssr']
     },
+
     ssr: {
-      noExternal: ['vueuc']
+      noExternal: ['naive-ui', 'vueuc']
     }
   }
 })

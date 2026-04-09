@@ -16,7 +16,11 @@ const menuItems = [
 const activeTab = ref<'profile' | 'resumes'>('profile')
 const avatarFile = ref<File | null>(null)
 const profileLoading = ref(false)
+const profileSubmitting = ref(false)
 const profileError = ref('')
+const profileSuccess = ref('')
+const resumesLoading = ref(false)
+const resumesError = ref('')
 const initialProfile = ref<Record<string, any> | null>(null)
 
 const profile = reactive({
@@ -38,8 +42,7 @@ const employmentOptions = [
 
 const myResumeList = ref<MyResumePayload[]>([])
 
-const syncProfile = (payload: Awaited<ReturnType<typeof getUserProfile>>) => {
-  const data = payload.data
+const syncProfile = (data: any) => {
   profile.id = String(data.id ?? '')
   profile.username = data.username ?? ''
   profile.nickname = data.nickname ?? '无名氏'
@@ -62,10 +65,16 @@ const syncProfile = (payload: Awaited<ReturnType<typeof getUserProfile>>) => {
 const loadProfile = async () => {
   profileLoading.value = true
   profileError.value = ''
+  profileSuccess.value = ''
 
   try {
-    const data = await getUserProfile()
-    syncProfile(data)
+    const { data, error } = await getUserProfile()
+
+    if (error.value || !data.value) {
+      throw new Error(error.value || '获取个人信息失败')
+    }
+
+    syncProfile(data.value)
   } catch (error: any) {
     profileError.value = error?.statusMessage || error?.message || '获取个人信息失败'
   } finally {
@@ -74,11 +83,12 @@ const loadProfile = async () => {
 }
 
 const submitProfile = async () => {
-  profileLoading.value = true
+  profileSubmitting.value = true
   profileError.value = ''
+  profileSuccess.value = ''
 
   try {
-    const data = await updateUserProfile({
+    const {data, error} = await updateUserProfile({
       nickname: profile.nickname,
       email: profile.email,
       phoneNumber: profile.phoneNumber,
@@ -86,12 +96,17 @@ const submitProfile = async () => {
       avatarFile: avatarFile.value
     })
 
+    if (error.value || !data.value) {
+      throw new Error(error.value || '更新个人信息失败')
+    }
+
     avatarFile.value = null
-    syncProfile(data)
+    syncProfile(data.value)
+    profileSuccess.value = '个人信息已更新'
   } catch (error: any) {
-    profileError.value = error?.statusMessage || error?.message || '更新个人信息失败'
+    profileError.value = error?.message || '更新个人信息失败'
   } finally {
-    profileLoading.value = false
+    profileSubmitting.value = false
   }
 }
 
@@ -124,11 +139,22 @@ const handleAvatarChange = (event: Event) => {
 }
 
 const getMyResumesList = async () => {
+  resumesLoading.value = true
+  resumesError.value = ''
+
   try {
-    const res = await myResumesList()
-    myResumeList.value = res.data || []
-  } catch (error) {
-    console.error('获取我的简历列表失败:', error)
+    const {data,error} = await myResumesList()
+    console.log(data)
+    if (error.value) {
+      throw new Error(error.value || '获取我的简历列表失败')
+    }
+
+    myResumeList.value = data.value || []
+  } catch (error: any) {
+    resumesError.value = error?.message || '获取我的简历列表失败'
+    myResumeList.value = []
+  } finally {
+    resumesLoading.value = false
   }
 }
 
@@ -188,6 +214,10 @@ onMounted(() => {
                 {{ profileError }}
               </n-alert>
 
+              <n-alert v-if="profileSuccess" type="success" :show-icon="false">
+                {{ profileSuccess }}
+              </n-alert>
+
               <label>
                 <span>用户名</span>
                 <n-input :value="profile.username" readonly />
@@ -210,12 +240,14 @@ onMounted(() => {
 
               <label>
                 <span>就业状态</span>
-                <n-select v-model:value="profile.employmentStatus" :options="employmentOptions" />
+                <ClientOnly>
+                  <n-select v-model:value="profile.employmentStatus" :options="employmentOptions" />
+                </ClientOnly>
               </label>
 
               <div class="profile-form__actions">
-                <n-button type="primary" :loading="profileLoading" @click="submitProfile">提交</n-button>
-                <n-button @click="resetProfile">重置</n-button>
+                <n-button type="primary" :loading="profileSubmitting" @click="submitProfile">提交</n-button>
+                <n-button :disabled="profileSubmitting" @click="resetProfile">重置</n-button>
               </div>
             </div>
 
@@ -242,6 +274,10 @@ onMounted(() => {
 
           <div class="resume-board">
             <aside class="resume-board__list">
+              <n-alert v-if="resumesError" type="error" :show-icon="false" class="resume-board__alert">
+                {{ resumesError }}
+              </n-alert>
+              <div v-if="resumesLoading" class="resume-board__loading">正在加载简历列表...</div>
               <NuxtLink
                 v-for="resume in myResumeList"
                 :key="resume.id"
@@ -254,6 +290,9 @@ onMounted(() => {
 
                 </div>
               </NuxtLink>
+              <div v-if="!resumesLoading && !myResumeList.length && !resumesError" class="resume-board__empty">
+                你还没有创建任何简历
+              </div>
             </aside>
 
             <div class="resume-board__gallery">

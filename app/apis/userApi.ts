@@ -1,4 +1,3 @@
-import { apiFetch } from '~/utils/http'
 
 export interface UserProfilePayload {
   id: number
@@ -20,9 +19,7 @@ export interface UpdateUserProfilePayload {
 }
 
 export const getUserProfile = () => {
-  return apiFetch<ApiResult<UserProfilePayload>>('/user/profile', {
-    method: 'GET'
-  })
+  return useHttpGet<UserProfilePayload>('userProfile','/user/profile', {$:true})
 }
 
 export const updateUserProfile = (payload: UpdateUserProfilePayload) => {
@@ -34,8 +31,9 @@ export const updateUserProfile = (payload: UpdateUserProfilePayload) => {
   if (payload.employmentStatus !== undefined) formData.append('employmentStatus', String(payload.employmentStatus))
   if (payload.avatarFile) formData.append('avatarFile', payload.avatarFile)
 
-  return apiFetch<ApiResult<UserProfilePayload>>('/user/profile', {
+  return useHttp<UserProfilePayload>('userProfilePut','/user/profile', {
     method: 'PUT',
-    body: formData
+    body: formData,
+    $: true
   })
 }

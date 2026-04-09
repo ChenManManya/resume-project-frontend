@@ -1,4 +1,3 @@
-import { apiFetch } from '~/utils/http'
 import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
 import { useAccessToken } from '~/utils/authStorage'
 export interface ResumeDetailPayload {
@@ -37,18 +36,17 @@ interface SaveDraftRequest {
 }
 
 export const createResume = (payload: CreateResumeRequest) => {
-  return apiFetch<ResumeDetailPayload>('/resumes', {
-    method: 'POST',
+  return useHttpPost<ResumeDetailPayload>('resumes', '/resumes', {
     body: payload
   })
 }
 
 export const getResumeDetail = (resumeId: number) => {
-  return apiFetch<ResumeDetailPayload>(`/resumes/${resumeId}`)
+  return useHttpGet<ResumeDetailPayload>('resumesDetails',`/resumes/${resumeId}`)
 }
 
 export const saveResumeDraft = (resumeId: number, payload: SaveDraftRequest) => {
-  return apiFetch<ResumeDetailPayload>(`/resumes/${resumeId}/draft`, {
+  return useHttp<ResumeDetailPayload>('resumeDraft',`/resumes/${resumeId}/draft`, {
     method: 'PUT',
     body: payload
   })
@@ -86,5 +84,5 @@ export const exportResumePng = (resumeId: number, versionId?: number) => {
 
 
 export const myResumesList = async () => {
-  return apiFetch<MyResumePayload[]>('/resumes/my')
+  return useHttpGet<MyResumePayload[]>('myResumeList','/resumes/my', {$:true})
 }

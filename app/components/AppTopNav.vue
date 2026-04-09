@@ -17,17 +17,19 @@ const navLinks = [
 const userMenuOpen = ref(false)
 
 const displayName = computed(() => currentUserState.currentUser.value?.nickname || currentUserState.currentUser.value?.username || '我的账户')
-const showUserMenu = computed(() => authState.isAuthed.value && Boolean(currentUserState.currentUser.value))
+const showUserMenu = computed(() => authState.isAuthed.value)
 
 watch(
-  () => authState.isAuthed.value,
-  (value) => {
-    if (value) {
+  [() => authState.isAuthed.value, () => route.path],
+  ([isAuthed, path]) => {
+    if (isAuthed && path !== '/' && !currentUserState.currentUser.value) {
       void currentUserState.load()
       return
     }
 
-    currentUserState.clear()
+    if (!isAuthed) {
+      currentUserState.clear()
+    }
   },
   { immediate: true }
 )
@@ -37,6 +39,8 @@ const closeUserMenu = () => {
 }
 
 const toggleUserMenu = () => {
+
+
   userMenuOpen.value = !userMenuOpen.value
 }
 
@@ -71,6 +75,11 @@ const handleLogout = async () => {
 
   await navigateTo('/login')
 }
+onMounted(() => {
+  if (authState.isAuthed.value && !currentUserState.currentUser.value) {
+    void currentUserState.load()
+  }
+})
 </script>
 
 <template>

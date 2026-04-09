@@ -1,17 +1,7 @@
 <script setup lang="ts">
 import AppTopNav from '~/components/AppTopNav.vue'
-import { computed, ref } from 'vue'
-
-type CategoryId =
-  | 'all'
-  | 'frontend'
-  | 'backend'
-  | 'product'
-  | 'operations'
-  | 'campus'
-  | 'intern'
-
-type TrackId = 'popular' | 'ats' | 'campus' | 'intern' | 'creative'
+import { computed, ref, watchEffect } from 'vue'
+import { type TemplatePayload, type TemplateTagsGroupPayload, getTemplateTagsGroup, pageTemplates } from '~/apis/templatesApi'
 
 interface Stair {
   id: string
@@ -31,15 +21,18 @@ interface TemplateCard {
   summary: string
   accent: string
   badge: string
-  categories: CategoryId[]
-  tracks: TrackId[]
   tags: string[]
-  score: string
+  previewImageUrl?: string
+}
+
+interface PagePayload<T> {
+  list: T[]
+  total: number
 }
 
 const categories: Stair[] = [
   { id: 'hot', label: '热门模板' },
-  { id: 'common', label: '通用模板'},
+  { id: 'common', label: '通用模板' }
 ]
 
 const quickFilters = ['Java', '前端开发', '实习', '校招', '后端开发', '产品经理']
@@ -52,94 +45,33 @@ const featuredLanes: FeaturedLane[] = [
   { title: '通用', subtitle: '适合多行业快速上手', accent: 'linear-gradient(135deg, #f4f4ff 0%, #ebe9ff 100%)', icon: '通' }
 ]
 
-const tracks = [
-  { id: 'popular' as const, label: '热门模板' },
-  { id: 'ats' as const, label: 'ATS 友好' },
-  { id: 'campus' as const, label: '校招首选' },
-  { id: 'intern' as const, label: '实习高频' },
-  { id: 'creative' as const, label: '品牌感' }
-]
+const activeCategory = ref<string>('hot')
+const searchKeyword = ref('')
+const hotActiveTag = ref('')
+const commonActiveTag = ref('')
+const pageSize = 6
 
-const templates: TemplateCard[] = [
-  {
-    id: 1,
-    title: '清爽求职简历模板',
-    summary: '适合前端、运营和产品岗位，用更轻的视觉把项目结果讲清楚。',
-    accent: 'linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)',
-    badge: '热门',
-    categories: ['all', 'frontend', 'campus'],
-    tracks: ['popular', 'campus'],
-    tags: ['校招', '实习', '前端'],
-    score: '投递完成率 91%'
-  },
-  {
-    id: 2,
-    title: '极简专业简历模板',
-    summary: '标题层级更克制，适合后端、算法和技术研究岗位。',
-    accent: 'linear-gradient(135deg, #eff6ff 0%, #f8fbff 100%)',
-    badge: '专业',
-    categories: ['all', 'backend', 'intern'],
-    tracks: ['ats', 'intern'],
-    tags: ['后端', '项目', '一页式'],
-    score: 'ATS 匹配度 95%'
-  },
-  {
-    id: 3,
-    title: '双栏项目经历模板',
-    summary: '把技能栈和项目拆开展示，更适合程序员岗位快速扫读。',
-    accent: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%)',
-    badge: '程序员',
-    categories: ['all', 'frontend', 'backend'],
-    tracks: ['popular', 'ats'],
-    tags: ['双栏', '项目', '技术'],
-    score: '阅读停留 2.8x'
-  },
-  {
-    id: 4,
-    title: '产品复盘简历模板',
-    summary: '更强调业务目标、策略拆解和增长结果，适合产品与运营。',
-    accent: 'linear-gradient(135deg, #fff3e8 0%, #fffaf2 100%)',
-    badge: '产品',
-    categories: ['all', 'product', 'operations'],
-    tracks: ['creative', 'popular'],
-    tags: ['增长', '复盘', '作品集感'],
-    score: '面邀转化 84%'
-  },
-  {
-    id: 5,
-    title: '校招生首份简历模板',
-    summary: '没有实习也能把课程、竞赛和社团整理得更有说服力。',
-    accent: 'linear-gradient(135deg, #eefbf3 0%, #f5fff8 100%)',
-    badge: '校招',
-    categories: ['all', 'campus'],
-    tracks: ['campus', 'popular'],
-    tags: ['校招', '竞赛', '社团'],
-    score: '首份简历友好'
-  },
-  {
-    id: 6,
-    title: '品牌感运营模板',
-    summary: '强化视觉节奏和内容策划信息，适合新媒体与品牌岗位。',
-    accent: 'linear-gradient(135deg, #f5f3ff 0%, #faf8ff 100%)',
-    badge: '品牌感',
-    categories: ['all', 'operations', 'product'],
-    tracks: ['creative'],
-    tags: ['运营', '品牌', '内容'],
-    score: '视觉辨识高'
-  }
-]
+const normalizeTemplates = (templates: TemplatePayload[], badge: string, accent: string) => {
+  return templates.map<TemplateCard>((template) => ({
+    id: template.id,
+    title: template.name,
+    summary: template.description,
+    accent,
+    badge,
+    tags: template.tags ?? [],
+    previewImageUrl: template.previewImageUrl
+  }))
+}
 
-const activeCategory = ref<CategoryId>('all')
-const activeTrack = ref<TrackId>('popular')
-const filteredTemplates = computed(() => {
-  return templates.filter((template) => {
-    const matchesCategory =
-      activeCategory.value === 'all' || template.categories.includes(activeCategory.value)
-    const matchesTrack = template.tracks.includes(activeTrack.value)
+const tagsGroupData: any = ref([]);
 
-    return matchesCategory && matchesTrack
-  })
-})
+
+const getTagsGroupData = async () => {
+  const {data, error } = await getTemplateTagsGroup()
+  tagsGroupData.value = data.value
+  console.log(tagsGroupData)
+}
+
 
 
 const goAnchor = (id: string) => {
@@ -156,6 +88,106 @@ const goAnchor = (id: string) => {
     })
   }
 }
+
+
+
+watchEffect(() => {
+  const value = tagsGroupData.value
+
+  if (!value) {
+    return
+  }
+
+  if (!hotActiveTag.value) {
+    hotActiveTag.value = value['热门']?.[0] ?? ''
+  }
+
+  if (!commonActiveTag.value) {
+    commonActiveTag.value = value['通用']?.[0] ?? ''
+  }
+})
+
+
+
+const hotTemplatesData = ref<PagePayload<TemplateCard>>({ list: [], total: 0 })
+const commonTemplatesData = ref<PagePayload<TemplateCard>>({ list: [], total: 0 })
+
+const fetchHotTemplatesData = async () => {
+  const {data,error} = await pageTemplates({
+    pageSize,
+    pageNum: 1,
+    category: '热门',
+    tag: hotActiveTag.value ? [hotActiveTag.value] : []
+  })
+  const page = data.value ?? { list: [], total: 0 }
+  hotTemplatesData.value = {
+    list: normalizeTemplates(page.list ?? [], '热门', 'linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)'),
+    total: page.total ?? 0
+  }
+}
+
+const fetchCommonTemplatesData = async () => {
+  const {data, error} = await pageTemplates({
+    pageSize,
+    pageNum: 1,
+    category: '通用',
+    tag: commonActiveTag.value ? [commonActiveTag.value] : []
+  })
+
+  const page = data.value ?? { list: [], total: 0 }
+  commonTemplatesData.value = {
+    list: normalizeTemplates(page.list ?? [], '通用', 'linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%)'),
+    total: page.total ?? 0
+  }
+}
+
+watchEffect(() => {
+  if (!hotActiveTag.value) {
+    return
+  }
+
+  void fetchHotTemplatesData()
+})
+
+watchEffect(() => {
+  if (!commonActiveTag.value) {
+    return
+  }
+
+  void fetchCommonTemplatesData()
+})
+
+
+const filterByKeyword = (templates: TemplateCard[] = []) => {
+  const keyword = searchKeyword.value.trim().toLowerCase()
+
+  if (!keyword) {
+    return templates
+  }
+
+  return templates.filter((template) => {
+    const title = template.title.toLowerCase()
+    const summary = template.summary.toLowerCase()
+    const tags = template.tags.join(' ').toLowerCase()
+
+    return title.includes(keyword) || summary.includes(keyword) || tags.includes(keyword)
+  })
+}
+
+const hotTemplates = computed(() => filterByKeyword(hotTemplatesData.value?.list ?? []))
+const commonTemplates = computed(() => filterByKeyword(commonTemplatesData.value?.list ?? []))
+const setHotTag = (tag: string) => {
+  hotActiveTag.value = tag
+}
+
+const setCommonTag = (tag: string) => {
+  commonActiveTag.value = tag
+}
+onMounted(()=>{
+  getTagsGroupData()
+  fetchCommonTemplatesData()
+  fetchHotTemplatesData()
+})
 </script>
 
 <template>
@@ -185,7 +217,7 @@ const goAnchor = (id: string) => {
           </div>
 
           <div class="hero-search">
-              <n-input placeholder="搜索你想投递的岗位、风格或模板关键词" round />
+              <n-input v-model:value="searchKeyword" placeholder="搜索你想投递的岗位、风格或模板关键词" round />
               <n-button class="hero-search-btn" type="primary" round>免费制作</n-button>
           </div>
 
@@ -198,6 +230,7 @@ const goAnchor = (id: string) => {
               >
                 {{ chip }}
               </button>
+              <n-button type="primary" @click="fetchHotTemplatesData">点我</n-button>
             </div>
         </div>
       </section>
@@ -208,14 +241,14 @@ const goAnchor = (id: string) => {
           <div class="template-tabs">
             <h2>热门简历模板</h2>
             <button
-              v-for="track in tracks"
-              :key="track.id"
+              v-for="tag in (tagsGroupData?.['热门'] ?? [])"
+              :key="tag"
               class="template-tab"
-              :class="{ 'is-active': activeTrack === track.id }"
+              :class="{ 'is-active': hotActiveTag === tag }"
               type="button"
-              @click="activeTrack = track.id"
+              @click="setHotTag(tag)"
             >
-              {{ track.label }}
+              {{ tag }}
             </button>
           </div>
 
@@ -224,13 +257,14 @@ const goAnchor = (id: string) => {
 
         <div class="template-grid">
           <article
-            v-for="template in filteredTemplates"
+            v-for="template in hotTemplates"
             :key="template.id"
             class="template-card"
-            :class="{ 'is-selected': template.id === filteredTemplates[0]?.id }"
+            :class="{ 'is-selected': template.id === hotTemplates[0]?.id }"
           >
             <div class="template-preview" :style="{ background: template.accent }">
-              <div class="mini-resume">
+              <img v-if="template.previewImageUrl" class="template-preview__image" :src="template.previewImageUrl" :alt="template.title" />
+              <div v-else class="mini-resume">
                 <div class="mini-resume__header">
                   <div>
                     <div class="paper-line paper-line--md" />
@@ -247,26 +281,20 @@ const goAnchor = (id: string) => {
                 <div class="mini-resume__section mini-resume__section--wide" />
                 <div class="mini-resume__section" />
               </div>
+              <div class="template-card__overlay">
+                <NuxtLink class="template-use-link" :to="`/template/${template.id}`">立即套用</NuxtLink>
+              </div>
             </div>
 
             <div class="template-info">
-              <div class="template-info__top">
-                <h3>{{ template.title }}</h3>
-                <span>{{ template.badge }}</span>
-              </div>
-              <p>{{ template.summary }}</p>
+              <h3>{{ template.title }}</h3>
               <div class="scene-tags template-tags">
                 <span v-for="tag in template.tags" :key="tag">{{ tag }}</span>
               </div>
-              <div class="template-meta">
-
-                <n-button tertiary type="primary" size="small">立即套用</n-button>
-              </div>
             </div>
-
-
           </article>
         </div>
+
       </section>
 
      
@@ -276,14 +304,14 @@ const goAnchor = (id: string) => {
           <div class="template-tabs">
             <h2>通用简历模板</h2>
             <button
-              v-for="track in tracks"
-              :key="track.id"
+              v-for="tag in (tagsGroupData?.['通用'] ?? [])"
+              :key="tag"
               class="template-tab"
-              :class="{ 'is-active': activeTrack === track.id }"
+              :class="{ 'is-active': commonActiveTag === tag }"
               type="button"
-              @click="activeTrack = track.id"
+              @click="setCommonTag(tag)"
             >
-              {{ track.label }}
+              {{ tag }}
             </button>
           </div>
 
@@ -292,13 +320,14 @@ const goAnchor = (id: string) => {
 
         <div class="template-grid">
           <article
-            v-for="template in filteredTemplates"
+            v-for="template in commonTemplates"
             :key="template.id"
             class="template-card"
-            :class="{ 'is-selected': template.id === filteredTemplates[0]?.id }"
+            :class="{ 'is-selected': template.id === commonTemplates[0]?.id }"
           >
             <div class="template-preview" :style="{ background: template.accent }">
-              <div class="mini-resume">
+              <img v-if="template.previewImageUrl" class="template-preview__image" :src="template.previewImageUrl" :alt="template.title" />
+              <div v-else class="mini-resume">
                 <div class="mini-resume__header">
                   <div>
                     <div class="paper-line paper-line--md" />
@@ -315,26 +344,20 @@ const goAnchor = (id: string) => {
                 <div class="mini-resume__section mini-resume__section--wide" />
                 <div class="mini-resume__section" />
               </div>
-            </div>
-
-            <div class="template-info">
-              <div class="template-info__top">
-                <h3>{{ template.title }}</h3>
-                <span>{{ template.badge }}</span>
+              <div class="template-card__overlay">
+                <NuxtLink class="template-use-link" :to="`/template/${template.id}`">立即套用</NuxtLink>
               </div>
-              <p>{{ template.summary }}</p>
+            </div>
+            <div class="template-info">
+              <h3>{{ template.title }}</h3>
               <div class="scene-tags template-tags">
                 <span v-for="tag in template.tags" :key="tag">{{ tag }}</span>
               </div>
-              <div class="template-meta">
-
-                <n-button tertiary type="primary" size="small">立即套用</n-button>
-              </div>
             </div>
-
-
+            
           </article>
         </div>
+
       </section>
     </main>
   </div>
@@ -819,20 +842,16 @@ const goAnchor = (id: string) => {
     display: none;
   }
 
+  .template-card__overlay {
+    display: none;
+  }
+
   .template-info {
     padding: $spacing-4;
-
-    p {
-      margin-top: $spacing-2;
-    }
   }
 
   .template-tags {
     margin-top: $spacing-3;
-  }
-
-  .template-meta {
-    margin-top: $spacing-4;
   }
 }
 
@@ -849,14 +868,44 @@ const goAnchor = (id: string) => {
     border-color: rgba($color-primary, 0.24);
     box-shadow: 0 18px 48px rgba(14, 165, 233, 0.12);
   }
+
+  &:hover {
+    .template-card__overlay {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 .template-preview {
-  height: 228px;
+  position: relative;
+  height: 360px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-5;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+}
+
+.template-preview__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.template-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.08) 0%, rgba(15, 23, 42, 0.48) 100%);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity $transition-fast, transform $transition-fast;
 }
 
 .mini-resume {
@@ -910,24 +959,14 @@ const goAnchor = (id: string) => {
 .template-info {
   padding: $spacing-5;
 
-  &__top {
-    display: flex;
-    justify-content: space-between;
-    gap: $spacing-3;
-    align-items: center;
-    margin-bottom: $spacing-2;
-  }
-
   h3 {
     color: $color-text-primary;
     font-size: $font-size-lg;
   }
+}
 
-  p {
-    color: $color-text-secondary;
-    line-height: 1.8;
-    font-size: $font-size-sm;
-  }
+.template-tags {
+  margin-top: $spacing-3;
 
   span {
     display: inline-flex;
@@ -940,25 +979,29 @@ const goAnchor = (id: string) => {
   }
 }
 
-.template-tags {
-  margin-top: $spacing-4;
+.template-use-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: #fff;
+  background: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.template-meta {
+.template-pagination {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: $spacing-3;
-  margin-top: $spacing-5;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
 
-  strong {
-    color: $color-text-primary;
+  span {
+    color: $color-text-secondary;
     font-size: $font-size-sm;
-  }
-
-  @media (max-width: 520px) {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 

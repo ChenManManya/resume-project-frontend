@@ -9,8 +9,8 @@ export const useCurrentUserStore = defineStore('current-user', () => {
     loading.value = true
 
     try {
-      const res = await getUserProfile()
-      currentUser.value = res.data
+      const {data,error} = await getUserProfile()
+      currentUser.value = data.value;
     } finally {
       loading.value = false
     }

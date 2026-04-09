@@ -24,10 +24,10 @@ const { $message } = useNuxtApp()
 
 const refreshCaptcha = async () => {
   try {
-    const captcha = await getCaptcha()
-    form.captchaKey = captcha.captchaKey
+    const {data, error} = await getCaptcha()
+    form.captchaKey = data.value.captchaKey
     form.captchaCode = ''
-    captchaImage.value = captcha.captchaImage ? captcha.captchaImage : ''
+    captchaImage.value = data.value.captchaImage
     errorMessage.value = ''
   } catch (error: any) {
     errorMessage.value = error?.statusMessage || error?.message || '验证码获取失败，请稍后重试'
@@ -39,20 +39,26 @@ const submitLogin = async () => {
   errorMessage.value = ''
 
   try {
-    const loginResult = await login({
+    const {data, error} = await login({
       username: form.username,
       password: form.password,
       captchaCode: form.captchaCode,
       captchaKey: form.captchaKey
     })
-    if (loginResult.code == 200) {
+    if (!error.value && data.value) {
       authState.refresh()
       $message.success('登录成功，正在跳转...')
       const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
       await navigateTo(redirect)
+      return
     }
+
+    errorMessage.value = error.value || '登录失败，请检查输入内容'
+    await refreshCaptcha()
+
     
   } catch (error: any) {
+    errorMessage.value = error?.message || '登录失败，请检查输入内容'
     await refreshCaptcha()
   } finally {
     loading.value = false

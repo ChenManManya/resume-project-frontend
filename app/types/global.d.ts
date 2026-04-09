@@ -10,4 +10,10 @@ declare global {
   success: boolean
   timestamp: number
 }
+interface PageResult<T> {
+  total: number
+  pageNum: number
+  pageSize: number
+  list: T[]
+}
 }
