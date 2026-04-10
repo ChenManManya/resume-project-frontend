@@ -5,8 +5,9 @@ definePageMeta({
 
 import AppTopNav from '~/components/AppTopNav.vue'
 import { logout } from '~/apis/authApi'
-import { getUserProfile, updateUserProfile } from '~/apis/userApi'
+import { getUserProfile, updateUserProfile, uploadAvatar } from '~/apis/userApi'
 import { myResumesList, type MyResumePayload } from '~/apis/resumeApi'
+import type { UploadFileInfo,UploadCustomRequestOptions } from 'naive-ui'
 
 const menuItems = [
   { key: 'profile', label: '基本信息' },
@@ -22,6 +23,10 @@ const profileSuccess = ref('')
 const resumesLoading = ref(false)
 const resumesError = ref('')
 const initialProfile = ref<Record<string, any> | null>(null)
+const { $message } = useNuxtApp()
+const avatarfileList = ref<UploadFileInfo[]>([
+
+])
 
 const profile = reactive({
   id: '',
@@ -50,7 +55,12 @@ const syncProfile = (data: any) => {
   profile.phoneNumber = data.phoneNumber ?? ''
   profile.employmentStatus = data.employmentStatus ?? 0
   profile.avatar = data.avatar || '/image.png'
-
+  avatarfileList.value = [{
+    id: 'avatar-' + profile.id, 
+    name: profile.nickname, 
+    url: profile.avatar,
+    status: 'finished'
+  }]
   initialProfile.value = {
     id: profile.id,
     username: profile.username,
@@ -93,14 +103,13 @@ const submitProfile = async () => {
       email: profile.email,
       phoneNumber: profile.phoneNumber,
       employmentStatus: profile.employmentStatus,
-      avatarFile: avatarFile.value
+      avatar: profile.avatar
     })
 
     if (error.value || !data.value) {
       throw new Error(error.value || '更新个人信息失败')
     }
 
-    avatarFile.value = null
     syncProfile(data.value)
     profileSuccess.value = '个人信息已更新'
   } catch (error: any) {
@@ -133,9 +142,50 @@ const handleAvatarChange = (event: Event) => {
   if (!file) {
     return
   }
-
   avatarFile.value = file
   profile.avatar = URL.createObjectURL(file)
+}
+
+
+const beforeUpload = async (
+  data:{
+      file: UploadFileInfo,
+      fileList: UploadFileInfo[]
+  }
+) => {
+  const allowedFileType = ['image/jpg','image/png','image/jpeg']
+
+  if (allowedFileType.findIndex(ele => data.file.file?.type == ele) == -1) {
+    $message.error('只能上传jpg/png格式的图片文件，请重新上传')
+    return false
+  }
+  fileList.splice(0, fileList.length, file)
+  return true
+}
+
+const handleCustomUpload = async ({ file, onFinish, onError }: UploadCustomRequestOptions) => {
+  try {
+    const rawFile = file.file as File;
+    const {data,error} = await uploadAvatar(rawFile); // 假设返回字符串 URL
+    console.log(data)
+    const avatarUrl = `${fetchConfig.baseURL}${data.value}`
+    file.url = avatarUrl;
+    console.log('avatarUrl', avatarUrl)
+    profile.avatar = avatarUrl;
+    
+
+    onFinish()
+  } catch (err) {
+    window.$message?.error('头像上传失败，请重试')
+    onError()
+  }
+}
+
+const handleUploadFinish = ({ fileList }: { fileList: UploadFileInfo[] }) => {
+  if (fileList.length) {
+    const latestFile = fileList[fileList.length - 1]
+    profile.avatar = latestFile.url || ''
+  }
 }
 
 const getMyResumesList = async () => {
@@ -252,13 +302,18 @@ onMounted(() => {
             </div>
 
             <div class="profile-avatar-panel">
-              <div class="profile-avatar-panel__preview">
-                <img :src="profile.avatar" :alt="profile.nickname" />
-              </div>
-              <label class="profile-avatar-panel__upload">
-                <input type="file" accept="image/*" @change="handleAvatarChange" />
-                <span>修改头像</span>
-              </label>
+              <n-upload
+                  @before-upload="beforeUpload"
+                  :custom-request="handleCustomUpload"
+                  @finish="handleUploadFinish"
+                  list-type="image-card"
+                  v-model:file-list="avatarfileList"
+                  :max="1"       
+                >
+                <div v-if="!avatarfileList.length" class="upload-placeholder">
+                  <span>上传头像</span>
+                </div>
+              </n-upload>
             </div>
           </div>
         </section>

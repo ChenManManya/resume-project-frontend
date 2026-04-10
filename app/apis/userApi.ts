@@ -15,7 +15,7 @@ export interface UpdateUserProfilePayload {
   email?: string
   phoneNumber?: string
   employmentStatus?: number
-  avatarFile?: File | null
+  avatar?: string
 }
 
 export const getUserProfile = () => {
@@ -23,17 +23,20 @@ export const getUserProfile = () => {
 }
 
 export const updateUserProfile = (payload: UpdateUserProfilePayload) => {
-  const formData = new FormData()
-
-  if (payload.nickname !== undefined) formData.append('nickname', payload.nickname)
-  if (payload.email !== undefined) formData.append('email', payload.email)
-  if (payload.phoneNumber !== undefined) formData.append('phoneNumber', payload.phoneNumber)
-  if (payload.employmentStatus !== undefined) formData.append('employmentStatus', String(payload.employmentStatus))
-  if (payload.avatarFile) formData.append('avatarFile', payload.avatarFile)
-
   return useHttp<UserProfilePayload>('userProfilePut','/user/profile', {
     method: 'PUT',
-    body: formData,
+    body: payload,
     $: true
+  })
+}
+
+
+export const uploadAvatar = (avatarfile:File) => {
+  const formdata = new FormData();
+  formdata.append('file', avatarfile)
+  return useHttp<string>('uploadAvatar', '/upload/avatar', {
+    method: 'POST',
+    body:formdata,
+    $:true,
   })
 }

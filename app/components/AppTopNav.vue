@@ -75,9 +75,10 @@ const handleLogout = async () => {
 
   await navigateTo('/login')
 }
-onMounted(() => {
+onMounted(async () => {
   if (authState.isAuthed.value && !currentUserState.currentUser.value) {
-    void currentUserState.load()
+    await currentUserState.load()
+    console.log('aaa', currentUserState.currentUser.value)
   }
 })
 </script>
@@ -103,9 +104,7 @@ onMounted(() => {
         <template v-if="showUserMenu">
           <div class="app-top-nav__user-wrap" @click.stop>
             <button class="app-top-nav__user" type="button" @click="toggleUserMenu">
-              <n-avatar round size="small" :src="currentUserState.currentUser.value?.avatar || undefined">
-                {{ displayName.slice(0, 1) }}
-              </n-avatar>
+              <n-avatar round size="small" :src="currentUserState.currentUser.value?.avatar"></n-avatar>
               <span>{{ displayName }}</span>
             </button>
 

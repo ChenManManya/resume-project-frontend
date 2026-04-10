@@ -1,7 +1,7 @@
 import { createDiscreteApi } from 'naive-ui'
 
 export const fetchConfig = {
-  baseURL: 'http://localhost:8080'
+  baseURL: 'http://localhost:8080/dev-api'
 }
 
 const isSuccessResult = <T>(res: ApiResult<T>) => res.code === 200
@@ -24,10 +24,21 @@ function useGetFetchOptions(options: any = {}) {
   }
 
   if (options.body) {
-    const rawBody = toRaw(options.body)
-    options.body = typeof rawBody === "object" ? { ...rawBody } : rawBody;
+    const rawBody = toRaw(options.body);
+    
+    if (rawBody instanceof FormData || rawBody instanceof Blob) {
+      options.body = rawBody;
+      
+      if (options.headers) {
+        delete options.headers['Content-Type'];
+        delete options.headers['content-type'];
+      }
+    } else if (typeof rawBody === "object") {
+      options.body = { ...rawBody };
+    } else {
+      options.body = rawBody;
+    }
   }
-
   return options
 }
 

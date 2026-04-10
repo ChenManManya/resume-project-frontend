@@ -8,16 +8,14 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      resumeApiBase: '/api'
+      resumeApiBase: '/dev-api'
     }
   },
 
   nitro: {
-    devProxy: {
-      '/api': {
-        target: 'http://localhost:8080/',
-        changeOrigin: true,
-        prependPath: false
+    routeRules: {
+      '/dev-api/**': {
+        proxy: 'http://localhost:8080/dev-api/**'
       }
     }
   },
@@ -41,7 +39,8 @@ export default defineNuxtConfig({
   vite: {
     plugins: [
       Components({
-        resolvers: [NaiveUiResolver()]
+        resolvers: [NaiveUiResolver()],
+        dts: true
       })
     ],
 
@@ -50,7 +49,7 @@ export default defineNuxtConfig({
         scss: {
           additionalData: '@use "~/assets/scss/variable.scss" as *;'
         }
-      }
+      },
     },
 
     optimizeDeps: {
