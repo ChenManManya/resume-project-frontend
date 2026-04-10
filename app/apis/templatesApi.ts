@@ -10,6 +10,16 @@ export interface TemplatePayload {
     usageNumaber: number
     defaultContentJson: string
 }
+
+
+export interface UserFavoriteTemplatePayload {
+    id: number,
+    name: string,
+    templateId: number,
+    previewImageUrl: string
+    createTime: Date
+}
+
     
 export interface TemplateTagsGroupPayload {
     [group: string]: string[]
@@ -33,5 +43,34 @@ export const pageTemplates = async (params: {pageNum: number, pageSize: number, 
         tag: params.tag,
         category: params.category
       }
+    })
+}
+
+
+export const favoriteTemplate = async (id:number) => {
+    return useHttpGet('favoriteTemplate', '/templates/favorite' ,{ 
+        $:true,
+        query: {
+            templateId: id
+        }
+    })
+}
+
+
+export const checkFavoriteTemplate = async (id:number) => {
+    return useHttpGet('checkFavoriteTemplate', '/templates/checkFavoriteTemplate' ,{ 
+        $:true,
+        query: {
+            templateId: id
+        }
+    })
+}
+export const pageUserFavoriteTemplate = async (params: {pageNum: number, pageSize: number}) => {
+    return useHttpGet('pageUserFavoriteTemplate', '/templates/pageFavorite' ,{ 
+        $:true,
+        query: {
+            page: params.pageNum,
+            size: params.pageSize
+        }
     })
 }

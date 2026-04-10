@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppTopNav from '~/components/AppTopNav.vue'
 import ResumeDocument from '~/components/resume/ResumeDocument.vue'
-import { getTemplateDetails, type TemplatePayload } from '~/apis/templatesApi'
+import { checkFavoriteTemplate, favoriteTemplate, getTemplateDetails, type TemplatePayload } from '~/apis/templatesApi'
 import { createDefaultResumeLayout, createDefaultResumeModules } from '~/utils/resumeData'
 import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
 
@@ -28,6 +28,11 @@ const parseJson = <T>(value: unknown): T | null => {
   }
 }
 
+const isFavoriteTemplate:any = ref<Boolean>(false);
+
+
+
+
 const { data } = await getTemplateDetails(templateId)
 watchEffect(() => {
   if (data.value) {
@@ -40,7 +45,7 @@ const resolveAssetUrl = (url?: string) => {
     return url
   }
 
-  if (/^https?:\/\//.test(url) || url.startsWith('data:')) {
+  if (/^http?:\/\//.test(url) || url.startsWith('data:')) {
     return url
   }
 
@@ -118,6 +123,17 @@ watchEffect(() => {
     selectedThemeColor.value = style?.theme?.primaryColor ?? createDefaultResumeLayout().theme.primaryColor
   }
 })
+
+const FavoriteThisTemplate = async ()=>{
+  const {data, error} = await favoriteTemplate(templateId)
+  isFavoriteTemplate.value = !isFavoriteTemplate.value
+}
+
+onMounted(async () => {
+  const {data} = await checkFavoriteTemplate(templateId)
+  isFavoriteTemplate.value = data.value
+})
+
 </script>
 
 <template>
@@ -154,6 +170,7 @@ watchEffect(() => {
 
         <div class="template-cta">
           <NuxtLink class="template-cta__button" :to="`/maker?templateId=${templateData.id}`">使用这个模板</NuxtLink>
+          <n-button type="success" @click="FavoriteThisTemplate">{{ isFavoriteTemplate ? '取消收藏': '收藏此模板' }}</n-button>
           <small>进入编辑器后可继续调整字体、主色与排版。</small>
         </div>
       </section>
