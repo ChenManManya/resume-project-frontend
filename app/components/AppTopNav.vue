@@ -7,11 +7,10 @@ import { useCurrentUser } from '~/composables/useCurrentUser'
 const route = useRoute()
 const authState = useAuthState()
 const currentUserState = useCurrentUser()
-
 const navLinks = [
   { label: '首页', to: '/' },
   { label: '简历制作', to: '/maker' },
-  { label: '个人中心', to: '/personal' }
+  { label: '个人中心', to: '/personal'}
 ]
 
 const userMenuOpen = ref(false)
@@ -48,10 +47,6 @@ const handleDocumentClick = () => {
   closeUserMenu()
 }
 
-if (import.meta.client) {
-  document.addEventListener('click', handleDocumentClick)
-}
-
 onBeforeUnmount(() => {
   if (import.meta.client) {
     document.removeEventListener('click', handleDocumentClick)
@@ -76,9 +71,10 @@ const handleLogout = async () => {
   await navigateTo('/login')
 }
 onMounted(async () => {
+  document.addEventListener('click', handleDocumentClick)
+
   if (authState.isAuthed.value && !currentUserState.currentUser.value) {
     await currentUserState.load()
-    console.log('aaa', currentUserState.currentUser.value)
   }
 })
 </script>
@@ -94,7 +90,7 @@ onMounted(async () => {
           :key="item.to"
           :to="item.to"
           class="app-top-nav__link"
-          :class="{ 'is-active': route.path === item.to }"
+          :class="{ 'is-active': item.to == route.path}"
         >
           {{ item.label }}
         </NuxtLink>
@@ -104,10 +100,11 @@ onMounted(async () => {
         <template v-if="showUserMenu">
           <div class="app-top-nav__user-wrap" @click.stop>
             <button class="app-top-nav__user" type="button" @click="toggleUserMenu">
-              <n-avatar round size="small" :src="currentUserState.currentUser.value?.avatar"></n-avatar>
+              <ClientOnly>
+                  <n-avatar round size="small" :src="currentUserState.currentUser.value?.avatar || ''" />
+              </ClientOnly>
               <span>{{ displayName }}</span>
             </button>
-
             <div v-if="userMenuOpen" class="app-top-nav__menu">
               <button type="button" @click="goPersonal">个人中心</button>
               <button type="button" @click="handleLogout">退出</button>
@@ -119,11 +116,16 @@ onMounted(async () => {
           <NuxtLink class="app-top-nav__primary" to="/register">注册</NuxtLink>
         </template>
       </div>
+
+
     </div>
   </header>
 </template>
 
 <style scoped lang="scss">
+.app-top-nav__actions-placeholder {
+  width: 150px; /* 根据需要调整 */
+}
 .app-top-nav {
   position: sticky;
   top: 0;
@@ -162,7 +164,7 @@ onMounted(async () => {
   color: #475569;
   font-size: 14px;
 
-  &.is-active {
+  &.router-link-exact-active {
     background: rgba(37, 99, 235, 0.08);
     color: #2563eb;
   }
@@ -190,6 +192,11 @@ onMounted(async () => {
   color: #fff;
   background: #2563eb;
 }
+
+// .linkActive {
+//     background: rgba(37, 99, 235, 0.08);
+//     color: #2563eb;
+// }
 
 .app-top-nav__user {
   gap: 10px;

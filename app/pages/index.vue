@@ -37,13 +37,6 @@ const categories: Stair[] = [
 
 const quickFilters = ['Java', '前端开发', '实习', '校招', '后端开发', '产品经理']
 
-const featuredLanes: FeaturedLane[] = [
-  { title: '热门', subtitle: '最常被投递的简历结构', accent: 'linear-gradient(135deg, #fff1ea 0%, #ffe4d6 100%)', icon: '火' },
-  { title: '专业', subtitle: '适合技术与研究型岗位', accent: 'linear-gradient(135deg, #eef3ff 0%, #e3ebff 100%)', icon: '专' },
-  { title: '程序员', subtitle: '项目经验优先展示', accent: 'linear-gradient(135deg, #eef9ff 0%, #dff3ff 100%)', icon: '码' },
-  { title: '产品', subtitle: '突出方法论与结果复盘', accent: 'linear-gradient(135deg, #fff5e8 0%, #ffe7cc 100%)', icon: '产' },
-  { title: '通用', subtitle: '适合多行业快速上手', accent: 'linear-gradient(135deg, #f4f4ff 0%, #ebe9ff 100%)', icon: '通' }
-]
 
 const activeCategory = ref<string>('hot')
 const searchKeyword = ref('')
@@ -119,7 +112,7 @@ const fetchHotTemplatesData = async () => {
     category: '热门',
     tag: hotActiveTag.value ? [hotActiveTag.value] : []
   })
-  const page = data.value ?? { list: [], total: 0 }
+  const page: any = data.value ?? { list: [], total: 0 }
   hotTemplatesData.value = {
     list: normalizeTemplates(page.list ?? [], '热门', 'linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)'),
     total: page.total ?? 0
@@ -134,7 +127,7 @@ const fetchCommonTemplatesData = async () => {
     tag: commonActiveTag.value ? [commonActiveTag.value] : []
   })
 
-  const page = data.value ?? { list: [], total: 0 }
+  const page:any = data.value ?? { list: [], total: 0 }
   commonTemplatesData.value = {
     list: normalizeTemplates(page.list ?? [], '通用', 'linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%)'),
     total: page.total ?? 0

@@ -45,7 +45,7 @@ const employmentOptions = [
   { label: '自由职业', value: 4 }
 ]
 
-const myResumeList = ref<MyResumePayload[]>([])
+const myResumeList: any = ref<MyResumePayload[]>([])
 
 const syncProfile = (data: any) => {
   profile.id = String(data.id ?? '')
@@ -183,7 +183,7 @@ const handleCustomUpload = async ({ file, onFinish, onError }: UploadCustomReque
 
 const handleUploadFinish = ({ fileList }: { fileList: UploadFileInfo[] }) => {
   if (fileList.length) {
-    const latestFile = fileList[fileList.length - 1]
+    const latestFile:any = fileList[fileList.length - 1]
     profile.avatar = latestFile.url || ''
   }
 }
@@ -194,7 +194,6 @@ const getMyResumesList = async () => {
 
   try {
     const {data,error} = await myResumesList()
-    console.log(data)
     if (error.value) {
       throw new Error(error.value || '获取我的简历列表失败')
     }
@@ -248,9 +247,7 @@ onMounted(() => {
             <div>
               <span>个人信息</span>
               <h1>基本信息</h1>
-              <p>维护你的个人资料，这些信息会优先带入简历编辑器。</p>
             </div>
-            <n-button @click="navigateTo('/maker')">去编辑简历</n-button>
           </div>
 
           <div class="profile-form-layout">
@@ -322,7 +319,6 @@ onMounted(() => {
           <div class="resume-board__header">
             <div>
               <span>我的简历</span>
-              <h1>继续管理你的模板与最近编辑记录。</h1>
             </div>
             <NuxtLink class="resume-board__more" to="/">更多模板 &gt;&gt;</NuxtLink>
           </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth'
+  middleware: 'auth',
 })
 
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
@@ -630,7 +630,6 @@ watch(
         <div class="editor-panel__header">
           <div>
             <span class="editor-panel__eyebrow">内容编辑</span>
-            <h2>模块内容与排版参数都可以在这里调整。</h2>
           </div>
         </div>
 
@@ -644,7 +643,6 @@ watch(
           >
             <button class="editor-card__summary" type="button" @click="toggleExpanded(module.key); selectedModuleKey = module.key">
               <div>
-                <span class="editor-card__eyebrow">{{ module.type === 'personal' ? '基础资料' : '板块内容' }}</span>
                 <h3>{{ moduleLabel(module) }}</h3>
               </div>
               <span class="editor-card__chevron">{{ isExpanded(module.key) ? '−' : '+' }}</span>

@@ -7,4 +7,5 @@
 
 <script setup lang="ts">
 import AppMessageBridge from '~/components/AppMessageBridge.vue'
+
 </script>
