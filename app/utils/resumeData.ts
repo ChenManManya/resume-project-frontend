@@ -6,7 +6,7 @@ export const createDefaultResumeLayout = (): ResumeLayoutConfig => ({
   hiddenModuleKeys: [],
   theme: {
     templateCode: 'simple',
-    fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif',
+    fontFamily: 'STXihei',
     titleSize: 24,
     bodySize: 13,
     lineHeight: 1.7,

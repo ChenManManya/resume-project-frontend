@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppTopNav from '~/components/AppTopNav.vue'
+import AppTopNav from '~/components/AppTopNav.client.vue'
 import { useAuthState } from '~/composables/useAuthState'
 import { getCaptcha, register } from '~/apis/authApi'
 
@@ -15,10 +15,10 @@ const captchaImage = ref('')
 const errorMessage = ref('')
 const loading = ref(false)
 const authState = useAuthState()
-const { $message } = useNuxtApp()
+const { $message }: any = useNuxtApp()
 const refreshCaptcha = async () => {
   try {
-    const {data, error} = await getCaptcha()
+    const {data, error}: { data: any, error: any } = await getCaptcha()
     form.captchaKey = data.value.captchaKey
     form.captchaCode = ''
     captchaImage.value = data.value.captchaImage
@@ -41,12 +41,11 @@ const submitRegister = async () => {
       captchaCode: form.captchaCode,
       captchaKey: form.captchaKey
     })
-
-    if (error.value) {
-      $message.warning(error.value || '注册失败，请检查输入内容')
-      await refreshCaptcha()
-      return
-    }
+      if (error.value) {
+        $message.warning(error.value || '注册失败，请检查输入内容')
+        await refreshCaptcha()
+        return
+      }
     $message.success('注册成功，正在跳转到登录页面...')
     authState.refresh()
     await navigateTo('/login')
@@ -103,7 +102,7 @@ onMounted(() => {
             </button>
           </div>
           <n-button type="primary" block size="large" :loading="loading" @click="submitRegister">注册账号</n-button>
-          <n-button type="ghost" block size="large" :loading="loading" @click="toLoginPage">已有账号？去登录</n-button>
+          <n-button type="ghost" block size="large"  @click="toLoginPage">已有账号？去登录</n-button>
         </div>
       </section>
     </div>

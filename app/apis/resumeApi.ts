@@ -3,7 +3,6 @@ import { useAccessToken } from '~/utils/authStorage'
 export interface ResumeDetailPayload {
   resumeId: number
   currentVersionId: number
-  versionNo: number
   title: string
   templateId: number
   status: string
@@ -48,7 +47,8 @@ export const getResumeDetail = (resumeId: number) => {
 export const saveResumeDraft = (resumeId: number, payload: SaveDraftRequest) => {
   return useHttp<ResumeDetailPayload>('resumeDraft',`/resumes/${resumeId}/draft`, {
     method: 'PUT',
-    body: payload
+    body: payload,
+    $: true
   })
 }
 

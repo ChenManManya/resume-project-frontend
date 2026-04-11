@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppTopNav from '~/components/AppTopNav.vue'
+import AppTopNav from '~/components/AppTopNav.client.vue'
 import { computed, ref, watchEffect } from 'vue'
 import { type TemplatePayload, type TemplateTagsGroupPayload, getTemplateTagsGroup, pageTemplates } from '~/apis/templatesApi'
 
@@ -8,12 +8,6 @@ interface Stair {
   label: string
 }
 
-interface FeaturedLane {
-  title: string
-  subtitle: string
-  accent: string
-  icon: string
-}
 
 interface TemplateCard {
   id: number
@@ -249,43 +243,14 @@ onMounted(()=>{
         </div>
 
         <div class="template-grid">
-          <article
-            v-for="template in hotTemplates"
-            :key="template.id"
-            class="template-card"
-            :class="{ 'is-selected': template.id === hotTemplates[0]?.id }"
-          >
-            <div class="template-preview" :style="{ background: template.accent }">
-              <img v-if="template.previewImageUrl" class="template-preview__image" :src="template.previewImageUrl" :alt="template.title" />
-              <div v-else class="mini-resume">
-                <div class="mini-resume__header">
-                  <div>
-                    <div class="paper-line paper-line--md" />
-                    <div class="paper-line paper-line--sm" />
-                  </div>
-                  <div class="mini-resume__avatar" />
-                </div>
-                <div class="mini-resume__row">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div class="mini-resume__section" />
-                <div class="mini-resume__section mini-resume__section--wide" />
-                <div class="mini-resume__section" />
-              </div>
-              <div class="template-card__overlay">
-                <NuxtLink class="template-use-link" :to="`/template/${template.id}`">立即套用</NuxtLink>
-              </div>
-            </div>
 
-            <div class="template-info">
-              <h3>{{ template.title }}</h3>
-              <div class="scene-tags template-tags">
-                <span v-for="tag in template.tags" :key="tag">{{ tag }}</span>
-              </div>
-            </div>
-          </article>
+          <ResumeCardNew 
+            v-for="template in hotTemplates" 
+            :key="template.id" 
+            :title="template.title"
+            :imgUrl="template.previewImageUrl"
+            :tags="template.tags"
+            @click="navigateTo(`/templates/${template.id}`)" />
         </div>
 
       </section>
@@ -692,7 +657,7 @@ onMounted(()=>{
 .template-grid,
 .scene-grid {
   display: grid;
-  gap: $spacing-5;
+  gap: $spacing-6;
 }
 
 .feature-grid {
@@ -809,7 +774,7 @@ onMounted(()=>{
 }
 
 .template-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 
   @media (max-width: 1080px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));

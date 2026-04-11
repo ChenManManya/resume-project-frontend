@@ -10,7 +10,6 @@ export default defineNuxtRouteMiddleware((to) => {
   }
 
   const token = getAccessToken()
-  console.log('Auth middleware: token =', token)
   if (!token) {
     return navigateTo({
       path: '/login',

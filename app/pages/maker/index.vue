@@ -21,7 +21,7 @@ type PageBreak = {
 const moduleList = ref<ResumeModule[]>(createDefaultResumeModules())
 const railCollapsed = ref(false)
 const selectedModuleKey = ref<string>('personal')
-const expandedKeys = ref<string[]>(['layout', 'personal'])
+const expandedKeys = ref<string[]>(['personal'])
 const hiddenModuleKeys = ref<string[]>([])
 const photoInputRef = ref<HTMLInputElement | null>(null)
 const layoutConfig = ref<ResumeLayoutConfig>(createDefaultResumeLayout())
@@ -30,6 +30,37 @@ const currentVersionId = ref<number | null>(null)
 const resumeTitle = ref('未命名简历')
 const templateId = ref(1)
 const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+const fontFamylys = ref([{label:'宋体', value: 'STFangsong'}, {label:'黑体', value: 'STXihei'}, {label:'楷体', value: 'STKaiti'}, {label:'思源黑体', value: '"Noto Sans SC", sans-serif'}])
+
+const fontSize = ref(Array.from({ length: 20 - 12 + 1 }, (_, i) => ({ 
+  label: `${i + 12}`, 
+  value: `${i + 12}` 
+})))
+
+const titleFontSize = ref(Array.from({ length: 36 - 18 + 1 }, (_, i) => ({ 
+  label: `${i + 18}`, 
+  value: `${i + 18}` 
+})))
+
+
+const lineHeight = Array.from({ length: 11 }, (_, i) => {
+  const val = 1.2 + i * 0.1
+  return {
+    label: val.toFixed(1),        // 避免浮点数精度问题
+    value: val.toFixed(1)
+  }
+})
+
+const showPredefinedPopover = ref(false)
+const handlePredefinedUpdateShow = (show: boolean) => {
+
+}
+
+const showGapPopover = ref(false)
+const handleGapUpdateShow = (show: boolean) => {
+
+}
 const isBootstrapping = ref(true)
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 const exportOptions = [
@@ -73,10 +104,13 @@ const layoutPresets = [
   }
 ]
 
+
+
 const previewRef = ref<HTMLElement | null>(null)
 const previewMetrics = ref<{ breaks: PageBreak[] }>({ breaks: [] })
 const editorRefs = reactive(new Map<string, HTMLElement>())
 let resizeObserver: ResizeObserver | null = null
+let previewAssetLoadHandler: (() => void) | null = null
 const route = useRoute()
 const router = useRouter()
 
@@ -155,10 +189,12 @@ const setPrimaryColor = (color: string) => {
 
 const isExpanded = (key: string) => expandedKeys.value.includes(key)
 
+const setExpandedKey = (key: string | null) => {
+  expandedKeys.value = key ? [key] : []
+}
+
 const ensureExpanded = (key: string) => {
-  if (!expandedKeys.value.includes(key)) {
-    expandedKeys.value.push(key)
-  }
+  setExpandedKey(key)
 }
 
 const selectModule = async (key: string) => {
@@ -170,11 +206,11 @@ const selectModule = async (key: string) => {
 
 const toggleExpanded = (key: string) => {
   if (isExpanded(key)) {
-    expandedKeys.value = expandedKeys.value.filter((item) => item !== key)
+    setExpandedKey(null)
     return
   }
 
-  expandedKeys.value.push(key)
+  setExpandedKey(key)
 }
 
 const toggleVisibility = (key: string, value: boolean) => {
@@ -250,42 +286,6 @@ const createCustomModule = () => {
   })
 }
 
-const applyRichFormat = (command: string, value?: string) => {
-  if (!import.meta.client) {
-    return
-  }
-
-  document.execCommand(command, false, value)
-}
-
-const insertRichLink = () => {
-  if (!import.meta.client) {
-    return
-  }
-
-  const url = window.prompt('请输入链接地址')?.trim()
-
-  if (!url) {
-    return
-  }
-
-  const normalizedUrl = /^https?:\/\//.test(url) ? url : `https://${url}`
-  document.execCommand('createLink', false, normalizedUrl)
-}
-
-const syncRichContent = (moduleKey: string, itemId: number, html: string) => {
-  const module = moduleList.value.find((item): item is ResumeSectionModule => item.key === moduleKey && item.type === 'section')
-  if (!module) {
-    return
-  }
-
-  const target = module.items.find((item) => item.id === itemId)
-  if (!target) {
-    return
-  }
-
-  target.content = html
-}
 
 const triggerPhotoUpload = () => {
   photoInputRef.value?.click()
@@ -330,6 +330,10 @@ const removeCustomModule = (moduleKey: string) => {
 
   if (selectedModuleKey.value === moduleKey) {
     selectedModuleKey.value = moduleList.value[0]?.key ?? 'personal'
+  }
+
+  if (expandedKeys.value.includes(moduleKey)) {
+    setExpandedKey(selectedModuleKey.value)
   }
 }
 
@@ -377,6 +381,9 @@ const removeSectionItem = (moduleKey: string, itemId: number) => {
 }
 
 const applyResumePayload = (payload: ResumeDetailPayload) => {
+  payload = payload.data.value
+console.log('加载简历数据:', payload.value)
+
   resumeId.value = payload.resumeId
   currentVersionId.value = payload.currentVersionId
   resumeTitle.value = payload.title
@@ -399,28 +406,10 @@ const applyResumePayload = (payload: ResumeDetailPayload) => {
   selectedModuleKey.value = firstVisible?.key ?? 'personal'
 }
 
-const createOrLoadResume = async () => {
+const LoadResume = async () => {
   const queryResumeId = Number(route.query.resumeId)
-
-  if (Number.isFinite(queryResumeId) && queryResumeId > 0) {
-    const detail = await getResumeDetail(queryResumeId)
-    applyResumePayload(detail)
-    return
-  }
-
-  const created = await createResume({
-    templateId: templateId.value,
-    title: resumeTitle.value
-  })
-
-  applyResumePayload(created)
-
-  await router.replace({
-    query: {
-      ...route.query,
-      resumeId: String(created.resumeId)
-    }
-  })
+  const detail: any = await getResumeDetail(queryResumeId)
+  applyResumePayload(detail)
 }
 
 const persistDraft = async () => {
@@ -431,7 +420,7 @@ const persistDraft = async () => {
   saveState.value = 'saving'
 
   try {
-    const saved = await saveResumeDraft(resumeId.value, {
+    const saved:any = await saveResumeDraft(resumeId.value, {
       title: resumeTitle.value,
       templateId: templateId.value,
       contentJson: {
@@ -485,38 +474,61 @@ const updatePreviewMetrics = () => {
   let currentLimit = contentPageHeight
 
   blocks.forEach((block) => {
-    const blockTop = block.offsetTop - paddingTop
+    const blockTop = block.offsetTop
     const blockBottom = blockTop + block.offsetHeight
 
-    if (blockBottom <= currentLimit) {
-      return
+    while (blockBottom > currentLimit) {
+      currentPage += 1
+      breaks.push({
+        id: `page-break-${currentPage}`,
+        pageNumber: currentPage,
+        top: currentLimit
+      })
+      currentLimit = contentPageHeight * currentPage
     }
-
-    currentPage += 1
-    currentLimit = contentPageHeight * currentPage
-    breaks.push({
-      id: `page-break-${currentPage}`,
-      pageNumber: currentPage,
-      top: block.offsetTop
-    })
   })
 
   previewMetrics.value = { breaks }
 }
 
-onMounted(async () => {
-  await createOrLoadResume()
-  isBootstrapping.value = false
+const schedulePreviewMetricsUpdate = async () => {
   await nextTick()
-  updatePreviewMetrics()
 
-  if (!previewRef.value || !import.meta.client) {
+  if (!import.meta.client) {
+    updatePreviewMetrics()
     return
   }
 
-  resizeObserver = new ResizeObserver(() => updatePreviewMetrics())
-  resizeObserver.observe(previewRef.value)
-  window.addEventListener('resize', updatePreviewMetrics)
+  requestAnimationFrame(() => {
+    updatePreviewMetrics()
+  })
+}
+
+onMounted(async () => {
+  try {
+    await LoadResume()
+    isBootstrapping.value = false
+    await schedulePreviewMetricsUpdate()
+
+    if (!previewRef.value || !import.meta.client) {
+      return
+    }
+
+    if (typeof ResizeObserver === 'undefined') {
+      console.warn('当前浏览器不支持 ResizeObserver，预览尺寸自适应将失效')
+      return
+    }
+
+    resizeObserver = new ResizeObserver(() => updatePreviewMetrics())
+    resizeObserver.observe(previewRef.value)
+    window.addEventListener('resize', updatePreviewMetrics)
+    previewAssetLoadHandler = () => {
+      void schedulePreviewMetricsUpdate()
+    }
+    previewRef.value.addEventListener('load', previewAssetLoadHandler, true)
+  } catch (error) {
+    console.error('maker 页面初始化出错:', error)
+  }
 })
 
 onBeforeUnmount(() => {
@@ -531,21 +543,29 @@ onBeforeUnmount(() => {
   if (import.meta.client) {
     window.removeEventListener('resize', updatePreviewMetrics)
   }
+
+  if (previewRef.value && previewAssetLoadHandler) {
+    previewRef.value.removeEventListener('load', previewAssetLoadHandler, true)
+  }
+
+  previewAssetLoadHandler = null
 })
 
 watch(
   moduleList,
   async () => {
-    await nextTick()
-    updatePreviewMetrics()
+    await schedulePreviewMetricsUpdate()
   },
   { deep: true }
 )
 
 watch(hiddenModuleKeys, async () => {
-  await nextTick()
-  updatePreviewMetrics()
+  await schedulePreviewMetricsUpdate()
 })
+
+watch(layoutConfig, async () => {
+  await schedulePreviewMetricsUpdate()
+}, { deep: true })
 
 watch(
   [moduleList, layoutConfig, hiddenModuleKeys, resumeTitle],
@@ -779,58 +799,79 @@ watch(
             <h2>模板排版</h2>
           </div>
           <div class="preview-layout-toolbar">
-            <div class="preview-layout-toolbar__presets">
-              <span>预设</span>
-              <div class="preview-layout-toolbar__preset-list">
-                <button
-                  v-for="preset in layoutPresets"
-                  :key="preset.key"
-                  type="button"
-                  class="preset-chip"
-                  @click="applyLayoutPreset(preset.key)"
-                >
-                  {{ preset.label }}
-                </button>
-              </div>
-            </div>
-            <label>
-              <span>字体</span>
-              <n-input v-model:value="layoutConfig.theme.fontFamily" />
-            </label>
-            <div class="preview-layout-toolbar__palette">
-              <span>主色</span>
-              <div class="preview-layout-toolbar__palette-list">
-                <button
-                  v-for="color in colorPalette"
-                  :key="color"
-                  type="button"
-                  class="color-dot"
-                  :class="{ 'is-active': layoutConfig.theme.primaryColor === color }"
-                  :style="{ background: color }"
-                  @click="setPrimaryColor(color)"
-                />
-              </div>
-            </div>
-            <label>
-              <span>标题</span>
-              <n-input-number v-model:value="layoutConfig.theme.titleSize" :min="18" :max="36" />
-            </label>
-            <label>
-              <span>正文</span>
-              <n-input-number v-model:value="layoutConfig.theme.bodySize" :min="11" :max="18" />
-            </label>
-            <label>
-              <span>行高</span>
-              <n-input-number v-model:value="layoutConfig.theme.lineHeight" :min="1.2" :max="2.2" :step="0.1" />
-            </label>
-            <label>
-              <span>间距</span>
-              <n-input-number v-model:value="layoutConfig.theme.sectionGap" :min="8" :max="40" />
-            </label>
-            <label>
-              <span>页边距</span>
-              <n-input v-model:value="layoutConfig.page.margin" placeholder="10mm" />
-            </label>
+            <n-popover
+              :show="showPredefinedPopover"
+              placement="left"
+              trigger="manual"
+              @update:show="handlePredefinedUpdateShow"
+            >
+              <template #trigger>
+                <n-button dashed @click="showPredefinedPopover = !showPredefinedPopover">预设</n-button>
+              </template>
+              <template #default>
+                <div class="preset-chip">
+                  <n-button
+                    v-for="preset in layoutPresets"
+                    :key="preset.key"
+                    @click="applyLayoutPreset(preset.key)"
+                  >
+                    {{ preset.label }}
+                  </n-button>
+                </div>
+              </template>
+            </n-popover>
+            <n-popover
+              :show="showGapPopover"
+              placement="bottom"
+              trigger="manual"
+              @update:show="handleGapUpdateShow"
+            >
+              <template #trigger>
+                <n-button dashed @click="showGapPopover = !showGapPopover">间距配置</n-button>
+              </template>
+              <template #default>
+                  <div style="width: 150px;">模块间距<n-slider v-model:value="layoutConfig.theme.sectionGap" :step="1" :min="8" :max="40" /></div>
+                  <!-- <div style="width: 150px;">页边距<n-slider v-model:value="layoutConfig.page.margin" :step="1" :min="8" :max="40" /></div> -->
+              </template>
+            </n-popover>
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                 <n-select v-model:value="layoutConfig.theme.fontFamily" :options="fontFamylys" />
+              </template>
+              字体
+            </n-tooltip>
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                 <n-select v-model:value="layoutConfig.theme.bodySize" :options="fontSize" />
+              </template>
+              字号
+            </n-tooltip>
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                 <n-select v-model:value="layoutConfig.theme.titleSize" :options="titleFontSize" />
+              </template>
+              标题字号
+            </n-tooltip>
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                 <n-select v-model:value="layoutConfig.theme.lineHeight" :options="lineHeight" />
+              </template>
+              行高
+            </n-tooltip>
+
+            <n-color-picker v-model:value="layoutConfig.theme.primaryColor" :show-preview="true" :swatches="colorPalette">
+                <template #trigger="{ value, onClick, ref: triggerRef }">
+                  <span
+                    :ref="triggerRef"
+                    @click="onClick"
+                    style="display: inline-block; line-height: 0;"
+                  >
+                    <n-button dashed title="主题色">
+                      <div :style="{ height: '20px', width: '20px', backgroundColor: value }"></div>
+                    </n-button>
+                  </span>
+                </template>
+             </n-color-picker>
           </div>
         </div>
 
@@ -934,11 +975,18 @@ watch(
 .module-rail,
 .editor-panel,
 .preview-panel {
-  min-height: calc(100vh - 110px);
+  min-height: calc(100vh - 210px);
+  max-height: calc(100vh - 210px);
   border: 1px solid rgba(148, 163, 184, 0.18);
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(16px);
+}
+
+
+.module-rail,
+.editor-card {
+    overflow: scroll;
 }
 
 .module-rail {
@@ -1082,7 +1130,7 @@ watch(
 .editor-panel,
 .preview-panel {
   border-radius: 28px;
-  padding: 22px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1090,11 +1138,11 @@ watch(
 
 .editor-panel__header,
 .preview-panel__toolbar {
-  margin-bottom: 18px;
+  margin-bottom: 5px;
 
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 5px;
 
   h2 {
     margin: 4px 0 0;
@@ -1111,8 +1159,8 @@ watch(
 }
 
 .preview-layout-toolbar {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
   gap: 10px;
   padding: 14px;
   border-radius: 18px;
@@ -1143,14 +1191,7 @@ watch(
   gap: 8px;
 }
 
-.preset-chip {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(203, 213, 225, 0.9);
-  background: #fff;
-  color: #334155;
-  font-size: 12px;
-}
+
 
 .color-dot {
   width: 24px;
@@ -1313,8 +1354,8 @@ label {
 .preview-canvas {
   flex: 1;
   min-height: 0;
-  overflow: auto;
   padding-right: 6px;
+  overflow: scroll;
 }
 
 .preview-paper {
@@ -1365,6 +1406,7 @@ label {
   gap: 12px;
   pointer-events: none;
   z-index: 2;
+  transform: translateY(-50%);
 
   &::before,
   &::after {
@@ -1439,4 +1481,12 @@ label {
     grid-template-columns: 1fr;
   }
 }
+
+.preset-chip {
+  display: flex;
+  flex-direction: row;
+  gap: 3px;
+}
+
+
 </style>

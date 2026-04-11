@@ -5,6 +5,12 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   ssr: true,
+  routeRules: {
+    '/maker/**': { ssr: false },
+    '/personal': { ssr: false },
+    '/login': { ssr: false },
+    '/register': { ssr: false }
+  },
 
   runtimeConfig: {
     public: {

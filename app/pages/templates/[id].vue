@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppTopNav from '~/components/AppTopNav.vue'
+import AppTopNav from '~/components/AppTopNav.client.vue'
 import ResumeDocument from '~/components/resume/ResumeDocument.vue'
 import { checkFavoriteTemplate, favoriteTemplate, getTemplateDetails, type TemplatePayload } from '~/apis/templatesApi'
 import { createDefaultResumeLayout, createDefaultResumeModules } from '~/utils/resumeData'
@@ -129,6 +129,12 @@ const FavoriteThisTemplate = async ()=>{
   isFavoriteTemplate.value = !isFavoriteTemplate.value
 }
 
+
+const { createResumeWithTemplate } = useResume()
+const handleCreateTemplate = () => {
+  createResumeWithTemplate(templateId)
+}
+
 onMounted(async () => {
   const {data} = await checkFavoriteTemplate(templateId)
   isFavoriteTemplate.value = data.value
@@ -169,20 +175,22 @@ onMounted(async () => {
         </div>
 
         <div class="template-cta">
-          <NuxtLink class="template-cta__button" :to="`/maker?templateId=${templateData.id}`">使用这个模板</NuxtLink>
-          <n-button type="success" @click="FavoriteThisTemplate">{{ isFavoriteTemplate ? '取消收藏': '收藏此模板' }}</n-button>
+          <n-button class="template-cta__button" type="success"  v-auth="handleCreateTemplate">使用这个模板</n-button>
+          <n-button type="success" v-auth="FavoriteThisTemplate">{{ isFavoriteTemplate ? '取消收藏': '收藏此模板' }}</n-button>
           <small>进入编辑器后可继续调整字体、主色与排版。</small>
         </div>
       </section>
 
       <section class="template-grid">
-        <article class="template-panel">
+        <ClientOnly>
+          <article class="template-panel">
           <div class="template-panel__preview">
             <div class="template-document-preview">
               <ResumeDocument :modules="previewModules" :layout="previewLayout" />
             </div>
           </div>
         </article>
+        </ClientOnly>
 
         <article class="template-panel">
           <div class="template-panel__header">

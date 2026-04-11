@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppTopNav from '~/components/AppTopNav.vue'
+import AppTopNav from '~/components/AppTopNav.client.vue'
 import { useAuthState } from '~/composables/useAuthState'
 import { getCaptcha, login } from '~/apis/authApi'
 const features = [

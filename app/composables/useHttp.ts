@@ -1,11 +1,11 @@
 import { createDiscreteApi } from 'naive-ui'
 
 export const fetchConfig = {
-  baseURL: 'http://localhost:8080/dev-api'
+  baseURL: 'http://localhost:8080'
 }
 
-const isSuccessResult = <T>(res: ApiResult<T>) => res.code === 200
-
+const isSuccessResult = <T>(res: ApiResult<T>) => res.code === 200 || res.code === 401
+const { message } = createDiscreteApi(["message"]);
 function useGetFetchOptions(options: any = {}) {
   const config = useRuntimeConfig()
   const { getAccessToken } = useAccessToken()
@@ -58,9 +58,20 @@ export async function useHttp<T = unknown>(
 
     return await $fetch<ApiResult<T>>(url, options)
       .then((res) => {
-        if(res.code==401) {
+        if(res.code == 401 ) {
           clearAccessToken();
-          navigateTo('/login')
+
+        }
+
+        // 服务端错误处理
+        if (!isSuccessResult(res)) {
+          const msg = res.message || '服务端错误';
+          message.error(msg);
+          error.value = msg;
+          return {
+            data,
+            error
+          }
         }
         data.value = res.data
         return {
@@ -69,12 +80,8 @@ export async function useHttp<T = unknown>(
         }
       })
       .catch((err) => {
-        console.log('err',err)
         const msg = err?.data?.data;
-        if (process.client) {
-            const { message } = createDiscreteApi(["message"]);
-            message.error(msg || "服务端错误");
-        }
+        message.error(msg || "服务端错误");
         error.value = msg;
         return {
           data,
@@ -91,10 +98,8 @@ export async function useHttp<T = unknown>(
   })
   // 客户端错误处理
   if (process.client && res.error.value) {
-    console.log('res', res)
-    const msg = res.error.value?.data?.data;
+    const msg = res.error.value.data
     if (!options.lazy) {
-      const { message } = createDiscreteApi(["message"]);
       message.error(msg || "服务端错误");
     }
   }

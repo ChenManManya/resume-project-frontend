@@ -3,7 +3,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
-import AppTopNav from '~/components/AppTopNav.vue'
+import AppTopNav from '~/components/AppTopNav.client.vue'
 import { logout } from '~/apis/authApi'
 import { getUserProfile, updateUserProfile, uploadAvatar } from '~/apis/userApi'
 import { myResumesList, type MyResumePayload } from '~/apis/resumeApi'
@@ -23,7 +23,7 @@ const profileSuccess = ref('')
 const resumesLoading = ref(false)
 const resumesError = ref('')
 const initialProfile = ref<Record<string, any> | null>(null)
-const { $message } = useNuxtApp()
+const { $message }:any = useNuxtApp()
 const avatarfileList = ref<UploadFileInfo[]>([
 
 ])
@@ -135,17 +135,6 @@ const handleLogout = async () => {
   await navigateTo('/login')
 }
 
-const handleAvatarChange = (event: Event) => {
-  const input = event.target as HTMLInputElement | null
-  const file = input?.files?.[0]
-
-  if (!file) {
-    return
-  }
-  avatarFile.value = file
-  profile.avatar = URL.createObjectURL(file)
-}
-
 
 const beforeUpload = async (
   data:{
@@ -159,21 +148,20 @@ const beforeUpload = async (
     $message.error('只能上传jpg/png格式的图片文件，请重新上传')
     return false
   }
-  fileList.splice(0, fileList.length, file)
+  console.log('beforeUpload fileList', data.fileList)
+  console.log('beforeUpload avatarfileList', avatarfileList.value)
+  avatarfileList.value.splice(0, avatarfileList.value.length, )
+  console.log('beforeUpload avatarfileList', avatarfileList.value)
   return true
 }
 
 const handleCustomUpload = async ({ file, onFinish, onError }: UploadCustomRequestOptions) => {
   try {
     const rawFile = file.file as File;
-    const {data,error} = await uploadAvatar(rawFile); // 假设返回字符串 URL
-    console.log(data)
+    const {data,error} = await uploadAvatar(rawFile);
     const avatarUrl = `${fetchConfig.baseURL}${data.value}`
     file.url = avatarUrl;
-    console.log('avatarUrl', avatarUrl)
     profile.avatar = avatarUrl;
-    
-
     onFinish()
   } catch (err) {
     window.$message?.error('头像上传失败，请重试')
@@ -181,11 +169,9 @@ const handleCustomUpload = async ({ file, onFinish, onError }: UploadCustomReque
   }
 }
 
-const handleUploadFinish = ({ fileList }: { fileList: UploadFileInfo[] }) => {
-  if (fileList.length) {
-    const latestFile:any = fileList[fileList.length - 1]
-    profile.avatar = latestFile.url || ''
-  }
+const handleUploadFinish = ({ file }: { file: UploadFileInfo }) => {
+  console.log('handleUploadFinish avatarfileList', avatarfileList.value)
+  profile.avatar = file.url || profile.avatar
 }
 
 const getMyResumesList = async () => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, onMounted } from 'vue'
 import { logout } from '~/apis/authApi'
 import { useAuthState } from '~/composables/useAuthState'
 import { useCurrentUser } from '~/composables/useCurrentUser'
@@ -9,7 +9,10 @@ const authState = useAuthState()
 const currentUserState = useCurrentUser()
 const navLinks = [
   { label: '首页', to: '/' },
-  { label: '简历制作', to: '/maker' },
+
+  { label: '模板大全', to: '/templates'},
+  {label: '名企热招', to: '/jobs'},
+  {label:'求职攻略', to: '/articles'},
   { label: '个人中心', to: '/personal'}
 ]
 
@@ -38,8 +41,6 @@ const closeUserMenu = () => {
 }
 
 const toggleUserMenu = () => {
-
-
   userMenuOpen.value = !userMenuOpen.value
 }
 
@@ -91,6 +92,7 @@ onMounted(async () => {
           :to="item.to"
           class="app-top-nav__link"
           :class="{ 'is-active': item.to == route.path}"
+           no-prefetch
         >
           {{ item.label }}
         </NuxtLink>
@@ -193,10 +195,6 @@ onMounted(async () => {
   background: #2563eb;
 }
 
-// .linkActive {
-//     background: rgba(37, 99, 235, 0.08);
-//     color: #2563eb;
-// }
 
 .app-top-nav__user {
   gap: 10px;
