@@ -74,3 +74,7 @@ export const pageUserFavoriteTemplate = async (params: {pageNum: number, pageSiz
         }
     })
 }
+
+export const getTemplateCategoryies = async () => {
+    return useHttpGet<string[]>('templateCategories', '/templates/category', {$: true})
+}
