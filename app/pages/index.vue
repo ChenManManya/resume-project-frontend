@@ -208,17 +208,6 @@ onMounted(()=>{
               <n-button class="hero-search-btn" type="primary" round>免费制作</n-button>
           </div>
 
-          <div class="hero-actions">
-              <button
-                v-for="chip in quickFilters"
-                :key="chip"
-                class="filter-chip"
-                type="button"
-              >
-                {{ chip }}
-              </button>
-              <n-button type="primary" @click="fetchHotTemplatesData">点我</n-button>
-            </div>
         </div>
       </section>
 
@@ -277,43 +266,13 @@ onMounted(()=>{
         </div>
 
         <div class="template-grid">
-          <article
-            v-for="template in commonTemplates"
-            :key="template.id"
-            class="template-card"
-            :class="{ 'is-selected': template.id === commonTemplates[0]?.id }"
-          >
-            <div class="template-preview" :style="{ background: template.accent }">
-              <img v-if="template.previewImageUrl" class="template-preview__image" :src="template.previewImageUrl" :alt="template.title" />
-              <div v-else class="mini-resume">
-                <div class="mini-resume__header">
-                  <div>
-                    <div class="paper-line paper-line--md" />
-                    <div class="paper-line paper-line--sm" />
-                  </div>
-                  <div class="mini-resume__avatar" />
-                </div>
-                <div class="mini-resume__row">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div class="mini-resume__section" />
-                <div class="mini-resume__section mini-resume__section--wide" />
-                <div class="mini-resume__section" />
-              </div>
-              <div class="template-card__overlay">
-                <NuxtLink class="template-use-link" :to="`/template/${template.id}`">立即套用</NuxtLink>
-              </div>
-            </div>
-            <div class="template-info">
-              <h3>{{ template.title }}</h3>
-              <div class="scene-tags template-tags">
-                <span v-for="tag in template.tags" :key="tag">{{ tag }}</span>
-              </div>
-            </div>
-            
-          </article>
+          <ResumeCardNew 
+            v-for="template in hotTemplates" 
+            :key="template.id" 
+            :title="template.title"
+            :imgUrl="template.previewImageUrl"
+            :tags="template.tags"
+            @click="navigateTo(`/templates/${template.id}`)" />
         </div>
 
       </section>

@@ -11,7 +11,6 @@ const navLinks = [
   { label: '首页', to: '/' },
 
   { label: '模板大全', to: '/templates'},
-  {label: '名企热招', to: '/jobs'},
   {label:'求职攻略', to: '/articles'},
   { label: '个人中心', to: '/personal'}
 ]

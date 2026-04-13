@@ -25,6 +25,7 @@ interface TemplatesPageData {
 }
 
 type ApiData<T> = T | ApiResult<T> | null | undefined
+const ALL_CATEGORY = '全部'
 
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -126,19 +127,30 @@ const loadTaxonomy = async () => {
 }
 
 const categories = computed(() => taxonomyData.value.categories)
+const categoryTabs = computed(() => [ALL_CATEGORY, ...categories.value])
 const tagGroups = computed(() => taxonomyData.value.tagGroups)
 
 const selectedCategory = computed(() => {
   const requested = typeof route.query.category === 'string' ? route.query.category : ''
 
+  if (requested === ALL_CATEGORY) {
+    return ALL_CATEGORY
+  }
+
   if (requested && categories.value.includes(requested)) {
     return requested
   }
 
-  return categories.value[0] ?? '热门'
+  return ALL_CATEGORY
 })
 
-const availableTags = computed(() => tagGroups.value[selectedCategory.value] ?? [])
+const availableTags = computed(() => {
+  if (selectedCategory.value === ALL_CATEGORY) {
+    return Array.from(new Set(Object.values(tagGroups.value).flat()))
+  }
+
+  return tagGroups.value[selectedCategory.value] ?? []
+})
 
 const selectedTag = computed(() => {
   const requested = typeof route.query.tag === 'string' ? route.query.tag : ''
@@ -181,7 +193,7 @@ const loadTemplates = async (queryKey = currentQueryKey.value) => {
     const response = await pageTemplates({
       pageNum: activePage.value,
       pageSize,
-      category: selectedCategory.value,
+      category: selectedCategory.value === ALL_CATEGORY ? undefined : selectedCategory.value,
       tag: selectedTag.value ? [selectedTag.value] : []
     })
 
@@ -300,7 +312,7 @@ const handlePageChange = (page: number) => {
             @update:value="setCategory"
           >
             <n-tab-pane
-              v-for="category in categories"
+              v-for="category in categoryTabs"
               :key="category"
               :name="category"
               :tab="category"
@@ -346,6 +358,7 @@ const handlePageChange = (page: number) => {
               :title="template.title"
               :img-url="template.previewImageUrl"
               :tags="template.tags"
+              @click="navigateTo(`/templates/${template.id}`)"
             />
         </div>
 

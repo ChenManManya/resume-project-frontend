@@ -29,6 +29,7 @@ body {
   line-height: $line-height-normal;
   color: $color-text-primary;
   background-color: $color-bg-secondary;
+  // background-color: #F4F4FB;
   min-height: 100vh;
   transition: background-color $transition-normal, color $transition-normal;
 }
