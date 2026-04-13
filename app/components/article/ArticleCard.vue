@@ -33,7 +33,16 @@ const articleDesc = computed(() => {
                 <div class="article-item-meta-tags">
                     <n-tag size="small" type="info" v-for="tag in article.tags" :key="tag">{{ tag }}</n-tag>
                 </div>
-                <div class="article-item-meta-date">{{ article.publishedTime }}</div>
+                <div class="article-item-meta-date">
+                    <NuxtTime
+                      :datetime="new Date(article.publishedTime)"
+                      year="numeric"
+                      month="long"
+                      day="numeric"
+                      hour="2-digit"
+                      minute="2-digit"
+                      />
+                </div>
             </div>
         </div>
         <div class="article-item-cover">

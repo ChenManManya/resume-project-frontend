@@ -28,8 +28,8 @@ export interface ArticleDetailPayload {
 }
 
 
-export const pageArticles = async (params: { pageNum: number; pageSize: number; tag?: string }) => {
-    const requestKey = `articlesPage:${params.pageNum}:${params.pageSize}:${params.tag ?? 'all'}`
+export const pageArticles = async (params: { pageNum: number; pageSize: number; tag?: string; keyword?: string }) => {
+    const requestKey = `articlesPage:${params.pageNum}:${params.pageSize}:${params.tag ?? 'all'}:${params.keyword ?? ''}`
 
     return useHttpGet<PageResult<ArticlePagePayload>>(requestKey, '/articles/public/page', {
         $: true,
@@ -37,6 +37,7 @@ export const pageArticles = async (params: { pageNum: number; pageSize: number; 
             page: params.pageNum,
             size: params.pageSize,
             tag: params.tag,
+            keyword: params.keyword,
         },
     })
 }
@@ -50,3 +51,12 @@ export const getListTags = async () => {
 }
 
 
+export const fetchRecommendArticles = async (params: { articleId: number; limit?: number }) => {
+    return useHttpGet<ArticlePagePayload[]>(`recommendArticles:${params.articleId}:${params.limit}`, 
+        `/articles/public/${params.articleId}/recommend`, {
+            query: {
+                limit: params.limit
+            },
+            $: true
+        })
+}

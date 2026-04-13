@@ -157,6 +157,9 @@ const selectedTag = computed(() => {
   return availableTags.value.includes(requested) ? requested : ''
 })
 
+const keyword = computed(() => typeof route.query.keyword === 'string' ? route.query.keyword : '')
+const keywordInput = ref(keyword.value)
+
 const activePage = computed(() => normalizePage(route.query.page))
 
 const featuredTags = computed(() => {
@@ -182,6 +185,7 @@ let latestTemplatesRequest = 0
 const currentQueryKey = computed(() => JSON.stringify({
   category: selectedCategory.value,
   tag: selectedTag.value,
+  keyword: keyword.value,
   page: activePage.value
 }))
 
@@ -194,7 +198,8 @@ const loadTemplates = async (queryKey = currentQueryKey.value) => {
       pageNum: activePage.value,
       pageSize,
       category: selectedCategory.value === ALL_CATEGORY ? undefined : selectedCategory.value,
-      tag: selectedTag.value ? [selectedTag.value] : []
+      tag: selectedTag.value ? [selectedTag.value] : [],
+      keyword: keyword.value || undefined
     })
 
     if (requestId !== latestTemplatesRequest) {
@@ -224,7 +229,11 @@ if (templatesReadyFor.value !== currentQueryKey.value) {
   await loadTemplates(currentQueryKey.value)
 }
 
-watch([selectedCategory, selectedTag, activePage], async () => {
+watch(keyword, (value) => {
+  keywordInput.value = value
+})
+
+watch([selectedCategory, selectedTag, keyword, activePage], async () => {
   if (templatesReadyFor.value === currentQueryKey.value) {
     return
   }
@@ -259,6 +268,7 @@ const setCategory = (category: string) => {
   void updateQuery({
     category,
     tag: undefined,
+    keyword: keyword.value || undefined,
     page: undefined
   })
 }
@@ -267,6 +277,7 @@ const setTag = (tag: string) => {
   void updateQuery({
     category: selectedCategory.value,
     tag,
+    keyword: keyword.value || undefined,
     page: undefined
   })
 }
@@ -275,6 +286,7 @@ const clearTag = () => {
   void updateQuery({
     category: selectedCategory.value,
     tag: undefined,
+    keyword: keyword.value || undefined,
     page: undefined
   })
 }
@@ -285,6 +297,32 @@ const setFeaturedTag = (tag: string) => {
   void updateQuery({
     category: targetCategory,
     tag,
+    keyword: keyword.value || undefined,
+    page: undefined
+  })
+}
+
+const applyKeywordSearch = () => {
+  const nextKeyword = keywordInput.value.trim()
+
+  if (keyword.value === nextKeyword) {
+    return
+  }
+
+  void updateQuery({
+    category: selectedCategory.value,
+    tag: selectedTag.value || undefined,
+    keyword: nextKeyword || undefined,
+    page: undefined
+  })
+}
+
+const clearKeywordSearch = () => {
+  keywordInput.value = ''
+  void updateQuery({
+    category: selectedCategory.value,
+    tag: selectedTag.value || undefined,
+    keyword: undefined,
     page: undefined
   })
 }
@@ -293,6 +331,7 @@ const handlePageChange = (page: number) => {
   void updateQuery({
     category: selectedCategory.value,
     tag: selectedTag.value || undefined,
+    keyword: keyword.value || undefined,
     page: page > 1 ? page : undefined
   })
 }
@@ -306,6 +345,16 @@ const handlePageChange = (page: number) => {
 
     <main class="templates-main">
       <n-card  style="margin-bottom: 16px">
+        <div class="templates-search-bar">
+          <n-input
+            v-model:value="keywordInput"
+            size="small"
+            clearable
+            placeholder="搜索模板关键词"
+            @keyup.enter="applyKeywordSearch"
+            @clear="clearKeywordSearch"
+          />
+        </div>
         <n-tabs
             type="line"
             :value="selectedCategory"
@@ -504,5 +553,15 @@ const handlePageChange = (page: number) => {
   flex-direction: row;
   padding: 10px 0 0 0;
   gap: 8px;
+}
+
+.templates-search-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+
+  :deep(.n-input) {
+    width: min(220px, 100%);
+  }
 }
 </style>

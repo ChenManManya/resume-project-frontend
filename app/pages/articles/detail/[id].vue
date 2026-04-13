@@ -56,6 +56,8 @@ const { data: articleDetail } = await useAsyncData(
     }
 )
 
+
+
 const stripHtmlTags = (value: string) => value.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim()
 
 const slugifyHeading = (value: string, fallbackIndex: number) => {

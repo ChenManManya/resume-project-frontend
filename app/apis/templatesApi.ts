@@ -26,22 +26,25 @@ export interface TemplateTagsGroupPayload {
 }
 
 
-export const getTemplateDetails = async (id: number) =>{
-    return useHttpGet<TemplatePayload>("templateDetails", `/templates/${id}`)
+export const getTemplateDetails = async (id: number, options: Record<string, unknown> = {}) =>{
+    return useHttpGet<TemplatePayload>(`templateDetails:${id}`, `/templates/${id}`, options)
 }
 
 export const getTemplateTagsGroup = async () => {
     return useHttpGet<TemplateTagsGroupPayload>('tag-groups','/templates/tag-groups', {$: true})
 }
 
-export const pageTemplates = async (params: {pageNum: number, pageSize: number, tag: string[], category: string}) => {
-    return useHttpGet<PageResult<TemplatePayload>>('templates-page','/templates/page', {
+export const pageTemplates = async (params: {pageNum: number, pageSize: number, tag: string[], category?: string, keyword?: string}) => {
+    const requestKey = `templates-page:${params.pageNum}:${params.pageSize}:${params.category ?? 'all'}:${params.keyword ?? ''}:${params.tag.join('|')}`
+
+    return useHttpGet<PageResult<TemplatePayload>>(requestKey,'/templates/page', {
       $: true,
       query: {
         page: params.pageNum,
         size: params.pageSize,
         tag: params.tag,
-        category: params.category
+        category: params.category,
+        keyword: params.keyword
       }
     })
 }
@@ -77,4 +80,16 @@ export const pageUserFavoriteTemplate = async (params: {pageNum: number, pageSiz
 
 export const getTemplateCategoryies = async () => {
     return useHttpGet<string[]>('templateCategories', '/templates/category', {$: true})
+}
+
+
+export const getRecommendTemplates = async (params: {templateId: number, limit: number}, options: Record<string, unknown> = {}) => {
+    return useHttpGet<TemplatePayload[]>(`recommendTemplates:${params.templateId}:${params.limit}`, `/templates/${params.templateId}/recommend`, {
+        $: true,
+        ...options,
+        query: {
+
+            limit: params.limit
+        }
+    })
 }

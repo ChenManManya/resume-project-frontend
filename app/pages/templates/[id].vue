@@ -1,16 +1,33 @@
 <script setup lang="ts">
 import AppTopNav from '~/components/AppTopNav.client.vue'
 import ResumeDocument from '~/components/resume/ResumeDocument.vue'
-import { checkFavoriteTemplate, favoriteTemplate, getTemplateDetails, type TemplatePayload } from '~/apis/templatesApi'
+import { checkFavoriteTemplate, favoriteTemplate, getTemplateDetails, getRecommendTemplates, type TemplatePayload } from '~/apis/templatesApi'
 import { createDefaultResumeLayout, createDefaultResumeModules } from '~/utils/resumeData'
 import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
 
 const route = useRoute()
 const config = useRuntimeConfig()
-const templateId: number = Number(route.params.id)
-const templateData = reactive<Partial<TemplatePayload>>({})
+const requestUrl = useRequestURL()
+const rawTemplateId = computed(() => Array.isArray(route.params.id) ? route.params.id[0] : route.params.id)
+const templateId = computed(() => Number(rawTemplateId.value))
+
+const ensureValidTemplateId = (id: number) => {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: '无效的模板 ID'
+    })
+  }
+
+  return id
+}
+
+ensureValidTemplateId(templateId.value)
+
 const presetThemeColors = ['#111111', '#4f6ef7', '#8b9098', '#b63c34', '#d46b47', '#f59e0b', '#8b5cf6', '#7bb661']
 const selectedThemeColor = ref('')
+const { isAuthed } = useAuthState()
+
 
 const parseJson = <T>(value: unknown): T | null => {
   if (value && typeof value === 'object') {
@@ -30,15 +47,38 @@ const parseJson = <T>(value: unknown): T | null => {
 
 const isFavoriteTemplate:any = ref<Boolean>(false);
 
-
-
-
-const { data } = await getTemplateDetails(templateId)
-watchEffect(() => {
-  if (data.value) {
-    Object.assign(templateData, data.value)
-  }
+const emptyTemplateData = (): TemplatePayload => ({
+  id: 0,
+  name: '',
+  description: '',
+  tags: [],
+  previewImageUrl: '',
+  catgory: '',
+  schemaJson: '',
+  styleJson: '',
+  usageNumaber: 0,
+  defaultContentJson: ''
 })
+
+// const { data: templateDetail, refresh: refreshTemplateDetail } = await useAsyncData(
+//   `template-detail:${templateId.value}`,
+//   async () => {
+//     const { data } = await getTemplateDetails(ensureValidTemplateId(templateId.value))
+//     return data.value ?? emptyTemplateData()
+//   }
+// )
+
+const { data: templateDetail } = await getTemplateDetails(ensureValidTemplateId(templateId.value))
+
+const { data: recommendTemplates, refresh: refreshRecommendTemplates } = await useAsyncData(
+  `template-recommend:${templateId.value}`,
+  async () => {
+    const { data } = await getRecommendTemplates({ templateId: ensureValidTemplateId(templateId.value), limit: 6 }, { $: true })
+    return data.value ?? []
+  }
+)
+
+const templateData = computed(() => templateDetail.value ?? emptyTemplateData())
 
 const resolveAssetUrl = (url?: string) => {
   if (!url) {
@@ -51,8 +91,8 @@ const resolveAssetUrl = (url?: string) => {
 
   const baseURL = typeof config.public.resumeApiBase === 'string' ? config.public.resumeApiBase : ''
 
-  if (import.meta.client) {
-    const origin = window.location.origin
+  if (baseURL) {
+    const origin = import.meta.client ? window.location.origin : requestUrl.origin
     const normalizedBase = baseURL.startsWith('http') ? baseURL : `${origin}${baseURL}`
     return new URL(url.replace(/^\//, ''), `${normalizedBase.replace(/\/$/, '')}/`).toString()
   }
@@ -62,8 +102,7 @@ const resolveAssetUrl = (url?: string) => {
 
 
 const previewModules = computed<ResumeModule[]>(() => {
-  const defaultContent = parseJson<{ modules?: ResumeModule[] }>(templateData.defaultContentJson)
-
+  const defaultContent = parseJson<{ modules?: ResumeModule[] }>(templateData.value.defaultContentJson)
   if (!defaultContent?.modules?.length) {
     return createDefaultResumeModules()
   }
@@ -85,8 +124,8 @@ const previewModules = computed<ResumeModule[]>(() => {
 
 const previewLayout = computed<ResumeLayoutConfig>(() => {
   const base = createDefaultResumeLayout()
-  const style = parseJson<Partial<ResumeLayoutConfig>>(templateData.styleJson)
-
+  const style = parseJson<{ modules?: ResumeModule[] }>(templateData.value.styleJson)
+  console.log('解析模板样式', style)
   if (!style) {
     return {
       ...base,
@@ -120,24 +159,67 @@ const previewLayout = computed<ResumeLayoutConfig>(() => {
 watchEffect(() => {
   if (!selectedThemeColor.value && templateData.styleJson) {
     const style = parseJson<Partial<ResumeLayoutConfig>>(templateData.styleJson)
+    console.log('初始化主题色', style?.theme?.primaryColor)
     selectedThemeColor.value = style?.theme?.primaryColor ?? createDefaultResumeLayout().theme.primaryColor
   }
 })
 
 const FavoriteThisTemplate = async ()=>{
-  const {data, error} = await favoriteTemplate(templateId)
+  await favoriteTemplate(templateId.value)
   isFavoriteTemplate.value = !isFavoriteTemplate.value
+}
+
+const requireAuth = async (action: () => void | Promise<void>) => {
+  if (!isAuthed.value) {
+    await navigateTo('/login')
+    return
+  }
+
+  await action()
 }
 
 
 const { createResumeWithTemplate } = useResume()
 const handleCreateTemplate = () => {
-  createResumeWithTemplate(templateId)
+  createResumeWithTemplate(templateId.value)
 }
 
-onMounted(async () => {
-  const {data} = await checkFavoriteTemplate(templateId)
+const handleCreateTemplateWithAuth = async () => {
+  await requireAuth(() => handleCreateTemplate())
+}
+
+const handleFavoriteTemplateWithAuth = async () => {
+  await requireAuth(() => FavoriteThisTemplate())
+}
+
+const loadFavoriteStatus = async (id = templateId.value) => {
+  const { data } = await checkFavoriteTemplate(ensureValidTemplateId(id))
   isFavoriteTemplate.value = data.value
+}
+
+watch(templateId, async (nextId, previousId) => {
+  if (nextId === previousId) {
+    return
+  }
+
+  ensureValidTemplateId(nextId)
+  selectedThemeColor.value = ''
+  isFavoriteTemplate.value = false
+
+  await Promise.all([
+    refreshTemplateDetail(),
+    refreshRecommendTemplates()
+  ])
+
+  if (import.meta.client) {
+    await loadFavoriteStatus(nextId)
+  }
+})
+
+
+
+onMounted(async () => {
+  await loadFavoriteStatus()
 })
 
 </script>
@@ -146,8 +228,6 @@ onMounted(async () => {
   <div class="template-page">
     <AppTopNav />
     <div class="template-shell">
-      <NuxtLink class="template-back" to="/">返回模板广场</NuxtLink>
-
       <section class="template-hero">
         <div>
           <span class="template-kicker">模板详情</span>
@@ -175,36 +255,34 @@ onMounted(async () => {
         </div>
 
         <div class="template-cta">
-          <n-button class="template-cta__button" type="success"  v-auth="handleCreateTemplate">使用这个模板</n-button>
-          <n-button type="success" v-auth="FavoriteThisTemplate">{{ isFavoriteTemplate ? '取消收藏': '收藏此模板' }}</n-button>
+          <n-button class="template-cta__button" type="success" @click="handleCreateTemplateWithAuth">使用这个模板</n-button>
+          <n-button type="success" @click="handleFavoriteTemplateWithAuth">{{ isFavoriteTemplate ? '取消收藏': '收藏此模板' }}</n-button>
           <small>进入编辑器后可继续调整字体、主色与排版。</small>
         </div>
       </section>
 
       <section class="template-grid">
-        <ClientOnly>
           <article class="template-panel">
-          <div class="template-panel__preview">
-            <div class="template-document-preview">
-              <ResumeDocument :modules="previewModules" :layout="previewLayout" />
+            <div class="template-panel__preview">
+              <div class="template-document-preview">
+                <ResumeDocument :modules="previewModules" :layout="previewLayout" />
+              </div>
             </div>
-          </div>
-        </article>
-        </ClientOnly>
+          </article>
 
         <article class="template-panel">
-          <div class="template-panel__header">
-            <span>模板亮点</span>
-          </div>
-          <ul class="template-metrics">
-            <!-- <li v-for="metric in template.metrics" :key="metric">{{ metric }}</li> -->
-          </ul>
-
           <div class="template-panel__header">
             <span>推荐模板</span>
           </div>
           <div class="template-sections">
-            <!-- <span v-for="section in template.sections" :key="section">{{ section }}</span> -->
+            <ResumeCardNew
+              v-for="item in recommendTemplates"
+              :key="item.id"
+              :title="item.name"
+              :img-url="resolveAssetUrl(item.previewImageUrl)"
+              :tags="item.tags ?? []"
+              @click="navigateTo(`/templates/${item.id}`)"
+            />
           </div>
         </article>
       </section>
@@ -258,20 +336,16 @@ onMounted(async () => {
   }
 }
 
-.template-tags,
-.template-sections {
+.template-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
-
-  span {
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: rgba(37, 99, 235, 0.08);
-    color: #2563eb;
-    font-size: 13px;
-  }
+}
+.template-sections {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 
 .template-color-picker {
@@ -366,7 +440,7 @@ onMounted(async () => {
 .template-document-preview {
   width: 100%;
   max-width: 620px;
-  height: 860px;
+  height: 1050px;
   overflow: hidden;
   display: flex;
   justify-content: center;

@@ -306,7 +306,7 @@ onMounted(() => {
             <div>
               <span>我的简历</span>
             </div>
-            <NuxtLink class="resume-board__more" to="/">更多模板 &gt;&gt;</NuxtLink>
+            <NuxtLink class="resume-board__more" to="/templates">更多模板 &gt;&gt;</NuxtLink>
           </div>
 
           <div class="resume-board">
@@ -320,10 +320,23 @@ onMounted(() => {
                 :key="resume.id"
                 class="resume-list-card"
               >
-                <div class="resume-list-card__thumb" />
+                <div class="resume-list-card__img">
+                  <img  :src="resume.previewImageUrl" alt="简历封面" />
+                </div>
                 <div class="resume-list-card__content">
                   <strong>{{ resume.title }}</strong>
-                  <small>上次更新：{{ resume.updateTime }}</small>
+
+                  <small>
+                    上次更新：
+                    <NuxtTime
+                      :datetime="new Date(resume.updateTime)"
+                      year="numeric"
+                      month="long"
+                      day="numeric"
+                      hour="2-digit"
+                      minute="2-digit"
+                      />
+                  </small>
 
                 </div>
               </NuxtLink>
@@ -334,13 +347,7 @@ onMounted(() => {
 
             <div class="resume-board__gallery">
               <div class="resume-gallery-grid">
-                <article v-for="resume in myResumeList" :key="`gallery-${resume.id}`" class="resume-gallery-card">
-                  <div class="resume-gallery-card__preview" />
-                  <strong>{{ resume.title }}</strong>
-                  <div class="resume-gallery-card__tags">
-                    <!-- <span v-for="tag in resume.tags" :key="tag">{{ tag }}</span> -->
-                  </div>
-                </article>
+
               </div>
             </div>
           </div>

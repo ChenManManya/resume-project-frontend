@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
-import { getListTags, pageArticles, type ArticlePagePayload } from '~/apis/articlesApi';
+import { fetchRecommendArticles, getListTags, pageArticles, type ArticlePagePayload } from '~/apis/articlesApi';
 
 const page = ref(1)
 const activeTab = ref('all')
@@ -8,12 +8,16 @@ const articles: ArticlePagePayload[] = ref([])
 const listTags = ref<string[]>([])
 const totalArticles = ref(0)
 const pageSize = 10
+const searchKeyword = ref('')
+const appliedKeyword = ref('')
+const recommendArticlesList = ref<ArticlePagePayload[]>([])
 
 const fetchArticles = async () => {
     const {data} = await pageArticles({
         pageNum: page.value,
         pageSize,
-        tag: activeTab.value === 'all' ? undefined : activeTab.value
+        tag: activeTab.value === 'all' ? undefined : activeTab.value,
+        keyword: appliedKeyword.value || undefined
      })
     articles.value = data.value?.list ?? []
     totalArticles.value = data.value?.total ?? 0
@@ -25,6 +29,28 @@ const fetchListTags = async () => {
 }
 
 await Promise.all([fetchArticles(), fetchListTags()])
+
+const { data: recommendArticles } = useAsyncData(async () => {
+    // fetchRecommendArticles({ templateId: 1, limit: 5 })
+})
+
+
+const applyKeywordSearch = async () => {
+    const nextKeyword = searchKeyword.value.trim()
+
+    if (appliedKeyword.value === nextKeyword) {
+        return
+    }
+
+    appliedKeyword.value = nextKeyword
+    page.value = 1
+    await fetchArticles()
+}
+
+const clearKeywordSearch = async () => {
+    searchKeyword.value = ''
+    await applyKeywordSearch()
+}
 
 const handleTabChange = async (tab: string) => {
     if (activeTab.value === tab) {
@@ -54,6 +80,16 @@ watch(page, async (currentPage, previousPage) => {
             <div class="articles-content ">
                 <div class="articles-header">
                     <n-card  size="small" :bordered="false">
+                        <div class="articles-search-bar">
+                            <n-input
+                                v-model:value="searchKeyword"
+                                size="small"
+                                clearable
+                                placeholder="搜索文章关键词"
+                                @keyup.enter="applyKeywordSearch"
+                                @clear="clearKeywordSearch"
+                            />
+                        </div>
                         <div class="articles-tabs-scroll">
                             <n-tabs :value="activeTab" type="line" animated @update:value="handleTabChange">
                                 <n-tab name="all" tab="全部" />
@@ -115,6 +151,16 @@ watch(page, async (currentPage, previousPage) => {
     >.articles-header {
         border-radius: 10px;
         min-width: 0;
+
+        .articles-search-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+
+            :deep(.n-input) {
+                width: min(220px, 100%);
+            }
+        }
 
         .articles-tabs-scroll {
             width: 100%;
