@@ -1,20 +1,29 @@
 <script setup lang="ts">
-import SimpleCard from '~/components/resume/simpleTemplate/SimpleCard.vue'
-import SimplePersonalInfo from '~/components/resume/simpleTemplate/SimplePersonalInfo.vue'
+import { computed } from 'vue'
+import { resolveResumeTemplateComponents } from '~/components/resume/templateRegistry'
 import type { ResumeModule } from '~/types/resume'
 
-defineProps<{
+const props = withDefaults(defineProps<{
   module: ResumeModule
-}>()
+  templateCode?: string
+}>(), {
+  templateCode: 'simple'
+})
+
+const resolvedTemplateComponents = computed(() => resolveResumeTemplateComponents(props.templateCode))
+const personalComponent = computed(() => resolvedTemplateComponents.value.PersonalInfo)
+const cardComponent = computed(() => resolvedTemplateComponents.value.Card)
 </script>
 
 <template>
-  <SimplePersonalInfo
+  <component
     v-if="module.type === 'personal'"
+    :is="personalComponent"
     :personal-info="module.data"
   />
-  <SimpleCard
+  <component
     v-else
+    :is="cardComponent"
     :card-type="module.cardType"
     :title="module.title"
     :items="module.items"

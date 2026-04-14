@@ -67,8 +67,8 @@ const props = withDefaults(
     gap: 18px;
 }
 .simple_personalInfo_photo {
-    width: 80px;
-    height: 96px;
+    width: 128px;
+    height: 128px;
 
     img {
         width: 100%;

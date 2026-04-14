@@ -29,17 +29,28 @@ const paperStyle = computed(() => {
     '--resume-page-margin': props.layout.page.margin
   }
 })
+const templateCode = computed(() => props.layout?.theme.templateCode || 'simple')
+const isTwoColumnTemplate = computed(() => templateCode.value === 'two-column')
 </script>
 
 <template>
   <div class="resume-document" :class="{ 'resume-document--print': printMode }" :style="paperStyle">
     <div class="resume-document__paper">
-      <div class="resume-document__content">
-        <ResumeBlockRenderer
+      <div class="resume-document__content" :class="{ 'resume-document__content--two-column': isTwoColumnTemplate }">
+        <div
           v-for="module in modules"
           :key="module.key"
-          :module="module"
-        />
+          class="resume-document__module"
+          :class="{
+            'resume-document__module--two-column': isTwoColumnTemplate,
+            'resume-document__module--personal': module.type === 'personal'
+          }"
+        >
+          <ResumeBlockRenderer
+            :module="module"
+            :template-code="templateCode"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -77,6 +88,20 @@ const paperStyle = computed(() => {
   line-height: var(--resume-line-height);
 }
 
+.resume-document__content--two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.resume-document__module--two-column {
+  min-width: 0;
+}
+
+.resume-document__module--two-column.resume-document__module--personal {
+  grid-column: 1 / -1;
+}
+
 .resume-document--print .resume-document__paper {
   margin: 0;
   box-shadow: none;
@@ -95,6 +120,10 @@ const paperStyle = computed(() => {
   .resume-document__content > * {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  .resume-document__content--two-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

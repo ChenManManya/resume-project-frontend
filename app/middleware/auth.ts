@@ -9,6 +9,10 @@ export default defineNuxtRouteMiddleware((to) => {
     return
   }
 
+  if (to.path === '/maker/print') {
+    return
+  }
+
   const token = getAccessToken()
   if (!token) {
     return navigateTo({

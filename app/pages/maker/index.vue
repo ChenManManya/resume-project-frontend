@@ -30,6 +30,7 @@ const currentVersionId = ref<number | null>(null)
 const resumeTitle = ref('未命名简历')
 const templateId = ref(1)
 const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+const exportState = ref<'idle' | 'exporting'>('idle')
 const photofileList = ref<any[]>([])
 const fontFamylys = ref([{label:'宋体', value: 'STFangsong'}, {label:'黑体', value: 'STXihei'}, {label:'楷体', value: 'STKaiti'}, {label:'思源黑体', value: '"Noto Sans SC", sans-serif'}])
 const { $message } = useNuxtApp()
@@ -65,7 +66,11 @@ const isBootstrapping = ref(true)
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 const exportOptions = [
   { label: '导出 PDF', key: 'pdf' },
-  { label: '导出 PNG', key: 'png' }
+]
+const templateOptions = [
+  { label: '简约经典', value: 'simple' },
+  { label: '双栏布局', value: 'two-column' },
+  { label: '卡片风格', value: 'card-style' }
 ]
 const colorPalette = ['#2563eb', '#0f766e', '#7c3aed', '#dc2626', '#ea580c', '#111827']
 const layoutPresets = [
@@ -431,13 +436,26 @@ const handleExport = async (key: string) => {
     return
   }
 
-  if (key === 'pdf') {
-    await exportResumePdf(resumeId.value, currentVersionId.value ?? undefined)
+  if (exportState.value === 'exporting') {
     return
   }
 
-  if (key === 'png') {
-    await exportResumePng(resumeId.value, currentVersionId.value ?? undefined)
+  exportState.value = 'exporting'
+  const loadingMessage = $message.loading('正在导出并下载 PDF，请稍候...', {
+    duration: 0
+  })
+
+  try {
+    if (key === 'pdf') {
+      await exportResumePdf(resumeId.value, `${resumeTitle.value}.pdf`)
+      $message.success('PDF 已开始下载')
+      return
+    }
+  } catch {
+    $message.error('PDF 导出失败，请稍后重试')
+  } finally {
+    loadingMessage.destroy()
+    exportState.value = 'idle'
   }
 }
 
@@ -651,8 +669,8 @@ watch(
         <n-button quaternary @click="railCollapsed = !railCollapsed">
           {{ railCollapsed ? '展开板块' : '收起板块' }}
         </n-button>
-        <n-dropdown trigger="click" :options="exportOptions" @select="handleExport">
-          <n-button type="primary">导出</n-button>
+        <n-dropdown trigger="click" :options="exportOptions" :disabled="exportState === 'exporting'" @select="handleExport">
+          <n-button type="primary" :loading="exportState === 'exporting'">导出</n-button>
         </n-dropdown>
       </div>
     </header>
@@ -888,6 +906,12 @@ watch(
             </n-popover>
             <n-tooltip trigger="hover">
               <template #trigger>
+                 <n-select v-model:value="layoutConfig.theme.templateCode" :options="templateOptions" />
+              </template>
+              模板样式
+            </n-tooltip>
+            <n-tooltip trigger="hover">
+              <template #trigger>
                  <n-select v-model:value="layoutConfig.theme.fontFamily" :options="fontFamylys" />
               </template>
               字体
@@ -944,15 +968,20 @@ watch(
               animation="200"
               ghost-class="preview-ghost"
               class="preview-block-list"
+              :class="{ 'preview-block-list--two-column': layoutConfig.theme.templateCode === 'two-column' }"
             >
               <template #item="{ element: module }">
                 <button
                   class="preview-block"
-                  :class="{ 'is-active': selectedModuleKey === module.key }"
+                  :class="{
+                    'is-active': selectedModuleKey === module.key,
+                    'preview-block--two-column': layoutConfig.theme.templateCode === 'two-column',
+                    'preview-block--personal': module.type === 'personal'
+                  }"
                   type="button"
                   @click="selectModule(module.key)"
                 >
-                  <ResumeBlockRenderer :module="module" />
+                  <ResumeBlockRenderer :module="module" :template-code="layoutConfig.theme.templateCode" />
                 </button>
               </template>
             </draggable>
@@ -1472,6 +1501,13 @@ label {
   flex-direction: column;
 }
 
+.preview-block-list--two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
 .preview-block {
   display: block;
   width: 100%;
@@ -1490,6 +1526,15 @@ label {
     border-color: rgba(37, 99, 235, 0.24);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
   }
+}
+
+.preview-block--two-column {
+  margin-top: 0 !important;
+  min-width: 0;
+}
+
+.preview-block--two-column.preview-block--personal {
+  grid-column: 1 / -1;
 }
 
 .preview-ghost {
@@ -1574,6 +1619,10 @@ label {
   .preview-paper {
     width: 100%;
     min-height: auto;
+  }
+
+  .preview-block-list--two-column {
+    grid-template-columns: 1fr;
   }
 
   .preview-layout-toolbar {

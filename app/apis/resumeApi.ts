@@ -45,6 +45,10 @@ export const getResumeDetail = (resumeId: number) => {
   return useHttpGet<ResumeDetailPayload>('resumesDetails',`/resumes/${resumeId}`)
 }
 
+export const getPublicResumeDetail = (resumeId: number) => {
+  return useHttpGet<ResumeDetailPayload>(`publicResumeDetail:${resumeId}`, `/resumes/pp/${resumeId}`)
+}
+
 export const saveResumeDraft = (resumeId: number, payload: SaveDraftRequest) => {
   return useHttp<ResumeDetailPayload>('resumeDraft',`/resumes/${resumeId}/draft`, {
     method: 'PUT',
@@ -53,11 +57,10 @@ export const saveResumeDraft = (resumeId: number, payload: SaveDraftRequest) => 
   })
 }
 
-const downloadBlob = async (url: string, fileName: string, versionId?: number) => {
+const downloadBlob = async (url: string, fileName: string) => {
   const { getAccessToken } = useAccessToken()
   const blob = await $fetch<Blob>(url, {
     method: 'POST',
-    body: versionId ? { versionId } : {},
     responseType: 'blob',
     baseURL: useRuntimeConfig().public.resumeApiBase,
     headers: getAccessToken()
@@ -75,13 +78,10 @@ const downloadBlob = async (url: string, fileName: string, versionId?: number) =
   URL.revokeObjectURL(blobUrl)
 }
 
-export const exportResumePdf = (resumeId: number, versionId?: number) => {
-  return downloadBlob(`/resumes/${resumeId}/export/pdf`, `resume-${resumeId}.pdf`, versionId)
+export const exportResumePdf = (resumeId: number, fileName: string) => {
+  return downloadBlob(`/resumes/${resumeId}/export/pdf`, fileName)
 }
 
-export const exportResumePng = (resumeId: number, versionId?: number) => {
-  return downloadBlob(`/resumes/${resumeId}/export/png`, `resume-${resumeId}.png`, versionId)
-}
 
 
 export const myResumesList = async (params: {pageNum: number, pageSize: number}) => {

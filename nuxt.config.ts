@@ -9,8 +9,7 @@ export default defineNuxtConfig({
     '/maker/**': { ssr: false },
     '/personal': { ssr: false },
     '/login': { ssr: false },
-    '/register': { ssr: false }
-  },
+    '/register': { ssr: false },  },
 
   runtimeConfig: {
     public: {
