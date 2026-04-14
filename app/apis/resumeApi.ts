@@ -18,6 +18,7 @@ export interface MyResumePayload {
   templateId: number
   status: string
   updateTime: string
+  previewImageUrl?: string
 }
 
 interface CreateResumeRequest {
@@ -83,6 +84,24 @@ export const exportResumePng = (resumeId: number, versionId?: number) => {
 }
 
 
-export const myResumesList = async () => {
-  return useHttpGet<MyResumePayload[]>('myResumeList','/resumes/my', {$:true})
+export const myResumesList = async (params: {pageNum: number, pageSize: number}) => {
+  return useHttpGet<PageResult<MyResumePayload>>(`myResumeList:${params.pageNum}:${params.pageSize}`,'/resumes/my/page', {
+    query: {
+      pageNum: params.pageNum,
+      pageSize: params.pageSize
+    },
+    $: true
+  })
+}
+
+
+
+export const uploadPhoto = (photofile:File) => {
+  const formdata = new FormData();
+  formdata.append('file', photofile)
+  return useHttp<string>('uploadPhoto', '/upload/photo', {
+    method: 'POST',
+    body:formdata,
+    $:true,
+  })
 }

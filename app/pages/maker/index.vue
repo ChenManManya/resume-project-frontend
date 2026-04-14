@@ -9,15 +9,15 @@ import ResumeBlockRenderer from '~/components/resume/ResumeBlockRenderer.vue'
 import draggable from 'vuedraggable'
 import CardType from '~/enums/cardEnum'
 import { createDefaultResumeLayout, createDefaultResumeModules } from '~/utils/resumeData'
-import { createResume, exportResumePdf, exportResumePng, getResumeDetail, saveResumeDraft, type ResumeDetailPayload } from '~/apis/resumeApi'
+import { createResume, exportResumePdf, exportResumePng, getResumeDetail, saveResumeDraft, uploadPhoto, type ResumeDetailPayload } from '~/apis/resumeApi'
 import type { ResumeLayoutConfig, ResumeModule, ResumePersonalModule, ResumeSectionModule } from '~/types/resume'
-
+import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui'
 type PageBreak = {
   id: string
   pageNumber: number
   top: number
 }
-
+const isEditingTitle = ref(false)
 const moduleList = ref<ResumeModule[]>(createDefaultResumeModules())
 const railCollapsed = ref(false)
 const selectedModuleKey = ref<string>('personal')
@@ -30,9 +30,9 @@ const currentVersionId = ref<number | null>(null)
 const resumeTitle = ref('未命名简历')
 const templateId = ref(1)
 const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
-
+const photofileList = ref<any[]>([])
 const fontFamylys = ref([{label:'宋体', value: 'STFangsong'}, {label:'黑体', value: 'STXihei'}, {label:'楷体', value: 'STKaiti'}, {label:'思源黑体', value: '"Noto Sans SC", sans-serif'}])
-
+const { $message } = useNuxtApp()
 const fontSize = ref(Array.from({ length: 20 - 12 + 1 }, (_, i) => ({ 
   label: `${i + 12}`, 
   value: `${i + 12}` 
@@ -104,7 +104,18 @@ const layoutPresets = [
   }
 ]
 
+const titleInputRef = ref<HTMLInputElement | null>(null)
+const startEditTitle = async () => {
+  isEditingTitle.value = true
 
+  await nextTick()
+  titleInputRef.value?.focus()
+  titleInputRef.value?.select()
+}
+
+const finishEditTitle = () => {
+  isEditingTitle.value = false
+}
 
 const previewRef = ref<HTMLElement | null>(null)
 const previewMetrics = ref<{ breaks: PageBreak[] }>({ breaks: [] })
@@ -112,7 +123,6 @@ const editorRefs = reactive(new Map<string, HTMLElement>())
 let resizeObserver: ResizeObserver | null = null
 let previewAssetLoadHandler: (() => void) | null = null
 const route = useRoute()
-const router = useRouter()
 
 const setEditorRef = (key: string) => (el: Element | null) => {
   if (el instanceof HTMLElement) {
@@ -382,8 +392,6 @@ const removeSectionItem = (moduleKey: string, itemId: number) => {
 
 const applyResumePayload = (payload: ResumeDetailPayload) => {
   payload = payload.data.value
-console.log('加载简历数据:', payload.value)
-
   resumeId.value = payload.resumeId
   currentVersionId.value = payload.currentVersionId
   resumeTitle.value = payload.title
@@ -503,6 +511,39 @@ const schedulePreviewMetricsUpdate = async () => {
     updatePreviewMetrics()
   })
 }
+const beforeUpload = async (
+  data:{
+      file: UploadFileInfo,
+      fileList: UploadFileInfo[]
+  }
+) => {
+  const allowedFileType = ['image/jpg','image/png','image/jpeg']
+  if (allowedFileType.findIndex(ele => data.file.file?.type == ele) == -1) {
+    $message.error('只能上传jpg/png格式的图片文件，请重新上传')
+    return false
+  }
+  photofileList.value.splice(0, photofileList.value.length, )
+  return true
+}
+
+const handleCustomUpload = async ({ file, onFinish, onError }: UploadCustomRequestOptions) => {
+  try {
+    const rawFile = file.file as File;
+    const {data,error} = await uploadPhoto(rawFile);
+    const photoUrl = `${fetchConfig.baseURL}${data.value}`
+    file.url = photoUrl;
+    visibleModules.value[0].data.photo = photoUrl
+    onFinish()
+  } catch (err) {
+    $message.error('照片上传失败，请重试')
+    onError()
+  }
+}
+
+const handleUploadFinish = ({ file }: { file: UploadFileInfo }) => {
+  console.log('handleUploadFinish photofileList', photofileList.value)
+    visibleModules.value[0].data.photo = file.url || visibleModules.value[0].data.photo
+}
 
 onMounted(async () => {
   try {
@@ -589,9 +630,40 @@ watch(
 <template>
   <div class="maker-workspace">
     <header class="maker-topbar">
-      <div>
-        <p class="maker-topbar__eyebrow">我的简历</p>
-        <h1>{{ resumeTitle }}</h1>
+      <div class="maker-topbar_left">
+        <div class="maker-topbar_left-back">
+          <n-icon size="24">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24"><path d="M16.62 2.99a1.25 1.25 0 0 0-1.77 0L6.54 11.3a.996.996 0 0 0 0 1.41l8.31 8.31c.49.49 1.28.49 1.77 0s.49-1.28 0-1.77L9.38 12l7.25-7.25c.48-.48.48-1.28-.01-1.76z" fill="currentColor"></path></svg>
+          </n-icon>
+          我的简历
+        </div>
+        <div class="maker-topbar_left-title">
+          <div
+            v-if="!isEditingTitle"
+            class="maker-topbar_title"
+            @click="startEditTitle"
+          >
+            <span>{{ resumeTitle }}</span>
+
+            <n-icon size="18">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path
+                  d="M15 16l-4 4h10v-4zm-2.94-8.81L3 16.25V20h3.75l9.06-9.06l-3.75-3.75zM5.92 18H5v-.92l7.06-7.06l.92.92L5.92 18zm12.79-9.96a.996.996 0 0 0 0-1.41l-2.34-2.34a1.001 1.001 0 0 0-1.41 0l-1.83 1.83l3.75 3.75l1.83-1.83z"
+                  fill="currentColor"
+                />
+              </svg>
+            </n-icon>
+          </div>
+
+          <input
+            v-else
+            ref="titleInputRef"
+            v-model="resumeTitle"
+            class="maker-topbar_title-input"
+            @blur="finishEditTitle"
+            @keyup.enter="finishEditTitle"
+          />
+        </div>
       </div>
       <div class="maker-topbar__actions">
         <span class="maker-save-state" :class="`is-${saveState}`">
@@ -694,19 +766,20 @@ watch(
                     <n-input v-model:value="module.data.address" />
                   </label>
                 </div>
-                <div class="editor-grid editor-grid--two">
-                  <label>
-                    <span>头像地址</span>
-                    <n-input v-model:value="module.data.photo" placeholder="可直接粘贴图片 URL" />
-                  </label>
-                  <div class="photo-editor">
-                    <span>头像操作</span>
-                    <div class="photo-editor__actions">
-                      <n-button secondary @click="triggerPhotoUpload">上传替换</n-button>
-                      <n-button quaternary @click="module.data.photo = ''">清空头像</n-button>
+                <div class="editor-photo-upload">
+                   <span>照片</span>
+                    <n-upload
+                      @before-upload="beforeUpload"
+                      :custom-request="handleCustomUpload"
+                      @finish="handleUploadFinish"
+                      list-type="image-card"
+                      v-model:file-list="photofileList"
+                      :max="1"       
+                    >
+                    <div v-if="!photofileList.length" class="upload-placeholder">
+                      <span>上传照片</span>
                     </div>
-                    <input ref="photoInputRef" class="photo-editor__input" type="file" accept="image/*" @change="handlePhotoUpload" />
-                  </div>
+                  </n-upload>
                 </div>
               </template>
 
@@ -912,6 +985,53 @@ watch(
 </template>
 
 <style scoped lang="scss">
+
+.maker-topbar_left {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  > .maker-topbar_left-back {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  > .maker-topbar_left-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    >.maker-topbar_title{
+      font-size: 16px;
+      font-weight: 500;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .maker-topbar_title-input {
+      font-size: 16px;
+      font-weight: 500;
+      color: #111827;
+      border: none;
+      border-bottom: 1px solid transparent;
+      background: transparent;
+      transition: border-color 0.2s;
+      cursor: pointer;
+      &:focus {
+        outline: none;
+        border-color: #2563eb;
+      }
+    }
+  }
+}
+
 .maker-workspace {
   min-height: 100vh;
   padding: 24px;

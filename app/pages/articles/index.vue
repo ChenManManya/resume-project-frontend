@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
 import { fetchRecommendArticles, getListTags, pageArticles, type ArticlePagePayload } from '~/apis/articlesApi';
+import { getRecommendTemplatesWithUser } from '~/apis/templatesApi';
 
 const page = ref(1)
 const activeTab = ref('all')
@@ -30,9 +31,12 @@ const fetchListTags = async () => {
 
 await Promise.all([fetchArticles(), fetchListTags()])
 
-const { data: recommendArticles } = useAsyncData(async () => {
+const { data: recommendTemplates } = useAsyncData(async () => {
     // fetchRecommendArticles({ templateId: 1, limit: 5 })
+    const {data} = await getRecommendTemplatesWithUser()
+    return data.value ?? []
 })
+
 
 
 const applyKeywordSearch = async () => {
@@ -105,12 +109,10 @@ watch(page, async (currentPage, previousPage) => {
                 <n-pagination class="article-pagination" v-model:page="page" :page-size="pageSize" :item-count="totalArticles" />
             </div>
             <div class="articles-sidebar">
-                <n-card title="推荐阅读" size="huge" :bordered="false">
-                    <n-list>
-                        <n-list-item v-for="i in 5" :key="i">
-                            <n-skeleton :width="'100%'" :height="20" />
-                        </n-list-item>
-                    </n-list>
+                <n-card title="推荐模板" size="huge" :bordered="false">
+                    <div class="recommend-templates">
+                        <ResumeCardNew v-for="template in recommendTemplates" :key="template.id" :title="template.title" :imgUrl="template.previewImageUrl" :tags="template.tags" />
+                    </div>
                 </n-card>
             </div>
         </main>

@@ -36,6 +36,8 @@ const activeCategory = ref<string>('hot')
 const searchKeyword = ref('')
 const hotActiveTag = ref('')
 const commonActiveTag = ref('')
+const hotTagInitialized = ref(false)
+const commonTagInitialized = ref(false)
 const pageSize = 6
 
 const normalizeTemplates = (templates: TemplatePayload[], badge: string, accent: string) => {
@@ -85,12 +87,14 @@ watchEffect(() => {
     return
   }
 
-  if (!hotActiveTag.value) {
+  if (!hotTagInitialized.value) {
     hotActiveTag.value = value['热门']?.[0] ?? ''
+    hotTagInitialized.value = true
   }
 
-  if (!commonActiveTag.value) {
+  if (!commonTagInitialized.value) {
     commonActiveTag.value = value['通用']?.[0] ?? ''
+    commonTagInitialized.value = true
   }
 })
 
@@ -129,18 +133,10 @@ const fetchCommonTemplatesData = async () => {
 }
 
 watchEffect(() => {
-  if (!hotActiveTag.value) {
-    return
-  }
-
   void fetchHotTemplatesData()
 })
 
 watchEffect(() => {
-  if (!commonActiveTag.value) {
-    return
-  }
-
   void fetchCommonTemplatesData()
 })
 
@@ -170,6 +166,16 @@ const setHotTag = (tag: string) => {
 const setCommonTag = (tag: string) => {
   commonActiveTag.value = tag
 }
+
+const goTemplatesSearch = async () => {
+  const keyword = searchKeyword.value.trim()
+
+  await navigateTo({
+    path: '/templates',
+    query: keyword ? { keyword } : undefined
+  })
+}
+
 onMounted(()=>{
   getTagsGroupData()
   fetchCommonTemplatesData()
@@ -204,8 +210,13 @@ onMounted(()=>{
           </div>
 
           <div class="hero-search">
-              <n-input v-model:value="searchKeyword" placeholder="搜索你想投递的岗位、风格或模板关键词" round />
-              <n-button class="hero-search-btn" type="primary" round>免费制作</n-button>
+              <n-input
+                v-model:value="searchKeyword"
+                placeholder="搜索你想投递的岗位、风格或模板关键词"
+                round
+                @keyup.enter="goTemplatesSearch"
+              />
+              <n-button class="hero-search-btn" type="primary" round @click="goTemplatesSearch">免费制作</n-button>
           </div>
 
         </div>
@@ -215,7 +226,7 @@ onMounted(()=>{
       <section class="template-section" id="hot">
         <div class="template-toolbar">
           <div class="template-tabs">
-            <h2>热门简历模板</h2>
+            <h2 @click="setHotTag('')">热门简历模板</h2>
             <button
               v-for="tag in (tagsGroupData?.['热门'] ?? [])"
               :key="tag"
@@ -228,7 +239,7 @@ onMounted(()=>{
             </button>
           </div>
 
-          <a class="template-more" href="#">更多模板</a>
+          <NuxtLink to="/templates">更多模板</NuxtLink>
         </div>
 
         <div class="template-grid">
@@ -249,7 +260,7 @@ onMounted(()=>{
         <div class="template-toolbar">
           
           <div class="template-tabs">
-            <h2>通用简历模板</h2>
+            <h2 @click="setCommonTag('')">通用简历模板</h2>
             <button
               v-for="tag in (tagsGroupData?.['通用'] ?? [])"
               :key="tag"
@@ -262,19 +273,18 @@ onMounted(()=>{
             </button>
           </div>
 
-          <a class="template-more" href="#">更多模板</a>
+             <NuxtLink to="/templates">更多模板</NuxtLink>
         </div>
 
         <div class="template-grid">
           <ResumeCardNew 
-            v-for="template in hotTemplates" 
+            v-for="template in commonTemplates" 
             :key="template.id" 
             :title="template.title"
             :imgUrl="template.previewImageUrl"
             :tags="template.tags"
             @click="navigateTo(`/templates/${template.id}`)" />
         </div>
-
       </section>
     </main>
   </div>

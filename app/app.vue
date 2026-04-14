@@ -1,7 +1,10 @@
 <template>
   <n-message-provider>
-    <AppMessageBridge />
-    <NuxtPage />
+    <n-modal-provider>
+      <AppMessageBridge />
+      
+      <NuxtPage />
+    </n-modal-provider>
   </n-message-provider>
 </template>
 

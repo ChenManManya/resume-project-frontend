@@ -49,6 +49,11 @@ export const pageTemplates = async (params: {pageNum: number, pageSize: number, 
     })
 }
 
+export const getRecommendTemplatesWithUser = async () => {
+    return useHttpGet<TemplatePayload[]>(`recommendTemplatesUser`, `/user/templates/recommend`, {
+        $: true,
+    })
+}
 
 export const favoriteTemplate = async (id:number) => {
     return useHttpGet('favoriteTemplate', '/templates/favorite' ,{ 
