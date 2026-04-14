@@ -1,8 +1,8 @@
 enum CardType {
   CUSTOM = 'custom',
-  EDUCATION = 'edu',
+  EDUCATION = 'education',
   PROJECT = 'project',
   WORK = 'work',
-  SKILL = 'skills'
+  SKILL = 'skill'
 }
 export default CardType;

@@ -73,6 +73,9 @@ export async function useHttp<T = unknown>(
             error
           }
         }
+        if (res.code === 401) {
+          clearAccessToken();
+        }
         data.value = res.data
         return {
           data,
@@ -94,6 +97,11 @@ export async function useHttp<T = unknown>(
     ...options,
     transform: (result) => {
       return result.data;
+    },
+    onResponse ({ request, response, options }) {
+      if(response._data?.code === 401) {
+        clearAccessToken();
+      }
     }
   })
   // 客户端错误处理

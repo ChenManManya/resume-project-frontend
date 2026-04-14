@@ -297,33 +297,6 @@ const createCustomModule = () => {
 }
 
 
-const triggerPhotoUpload = () => {
-  photoInputRef.value?.click()
-}
-
-const handlePhotoUpload = async (event: Event) => {
-  const input = event.target as HTMLInputElement | null
-  const file = input?.files?.[0]
-
-  if (!file) {
-    return
-  }
-
-  const personalModule = moduleList.value.find((module): module is ResumePersonalModule => module.type === 'personal')
-  if (!personalModule) {
-    return
-  }
-
-  const reader = new FileReader()
-  reader.onload = () => {
-    if (typeof reader.result === 'string') {
-      personalModule.data.photo = reader.result
-    }
-  }
-  reader.readAsDataURL(file)
-
-  input.value = ''
-}
 
 const removeCustomModule = (moduleKey: string) => {
   const target = moduleList.value.find(
@@ -399,7 +372,12 @@ const applyResumePayload = (payload: ResumeDetailPayload) => {
   moduleList.value = payload.contentJson.modules
   layoutConfig.value = payload.layoutJson
   hiddenModuleKeys.value = payload.layoutJson.hiddenModuleKeys ?? []
-
+  photofileList.value = [{
+    id: 'avatar-' + resumeId.value, 
+    name: resumeTitle.value, 
+    url: payload.contentJson.modules.find(m => m.type === 'personal')?.data.photo ?? '',
+    status: 'finished'
+  }]
   const order = payload.layoutJson.moduleOrder ?? []
   if (order.length > 0) {
     const orderMap = new Map(order.map((key, index) => [key, index]))
@@ -548,6 +526,7 @@ const handleUploadFinish = ({ file }: { file: UploadFileInfo }) => {
 onMounted(async () => {
   try {
     await LoadResume()
+    console.log(photofileList.value)
     isBootstrapping.value = false
     await schedulePreviewMetricsUpdate()
 
@@ -631,7 +610,7 @@ watch(
   <div class="maker-workspace">
     <header class="maker-topbar">
       <div class="maker-topbar_left">
-        <div class="maker-topbar_left-back">
+        <div class="maker-topbar_left-back" @click="navigateTo({path: '/personal'})">
           <n-icon size="24">
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24"><path d="M16.62 2.99a1.25 1.25 0 0 0-1.77 0L6.54 11.3a.996.996 0 0 0 0 1.41l8.31 8.31c.49.49 1.28.49 1.77 0s.49-1.28 0-1.77L9.38 12l7.25-7.25c.48-.48.48-1.28-.01-1.76z" fill="currentColor"></path></svg>
           </n-icon>
