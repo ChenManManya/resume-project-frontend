@@ -6,7 +6,7 @@ definePageMeta({
 import AppTopNav from '~/components/AppTopNav.client.vue'
 import { logout } from '~/apis/authApi'
 import { getUserProfile, updateUserProfile, uploadAvatar } from '~/apis/userApi'
-import { myResumesList, type MyResumePayload } from '~/apis/resumeApi'
+import { myResumesList, type MyResumePayload, renameResume, removeResume } from '~/apis/resumeApi'
 import type { UploadFileInfo,UploadCustomRequestOptions } from 'naive-ui'
 import { getRecommendTemplatesWithUser } from '~/apis/templatesApi'
 
@@ -15,6 +15,7 @@ const menuItems = [
   { key: 'resumes', label: '我的简历' }
 ]
 
+const showRenameModal = ref(false)
 const activeTab = ref<'profile' | 'resumes'>('profile')
 const avatarFile = ref<File | null>(null)
 const profileLoading = ref(false)
@@ -40,6 +41,11 @@ const profile = reactive({
   phoneNumber: '',
   employmentStatus: 0,
   avatar: '/image.png'
+})
+
+const renameForm = reactive({
+  resumeId: 0,
+  newTitle: ''
 })
 
 const employmentOptions = [
@@ -179,7 +185,7 @@ const getMyResumesList = async () => {
   resumesError.value = ''
 
   try {
-    const {data,error} = await myResumesList({
+    const {data,error} : { data: any, error: any } = await myResumesList({
       pageNum: resumePage.value,
       pageSize: resumePageSize
     })
@@ -211,15 +217,55 @@ const openResume = async (resumeId: number) => {
   await navigateTo(`/maker?resumeId=${resumeId}`)
 }
 
-const handleRename = () => {
-  $message.info('点击了修改简历名字，后续会实现这个功能的')
+const handleRename = (resumeId: number) => {
+  renameForm.resumeId = Number(resumeId)
+  showRenameModal.value = true
 }
 
 const recommendTemplates = ref<any[]>([])
 const fetchRecommendTemplates = async () => {
-  const {data,error} = await getRecommendTemplatesWithUser()
+  const {data,error} : { data: any, error: any } = await getRecommendTemplatesWithUser()
   if (data.value) {
     recommendTemplates.value = data.value
+  }
+}
+
+const handleRenameConfirm = async () => {
+  if (!renameForm.newTitle.trim()) {
+    $message.warning('简历名字不能为空')
+    return
+  }
+
+  try {
+    const {data,error} = await renameResume(renameForm.resumeId, renameForm.newTitle.trim())
+    if (error.value) {
+      throw new Error(error.value || '修改简历名字失败')
+    }
+
+    $message.success('简历名字修改成功')
+    showRenameModal.value = false
+    await getMyResumesList()
+  } catch (error: any) {
+    $message.error(error?.message || '修改简历名字失败')
+  }
+
+}
+  
+const deleteResume = async (resumeId: number) => {
+  if (!confirm('确定要删除这份简历吗？此操作无法撤销')) {
+    return
+  }
+
+  try {
+    const {data, error} : { data: any, error: any } = await removeResume(resumeId)
+    if (error.value) {
+      throw new Error(error.value || '删除简历失败')
+    }
+
+    $message.success('简历删除成功')
+    await getMyResumesList()
+  } catch (error: any) {
+    $message.error(error?.message || '删除简历失败')
   }
 }
 
@@ -376,7 +422,7 @@ onMounted(() => {
                 <div class="footer-actions" @click.stop>
                       <n-tooltip trigger="hover">
                         <template #trigger>
-                          <button type="button" class="footer-action-btn" @click.stop="handleRename">
+                          <button type="button" class="footer-action-btn" @click.stop="handleRename(resume.id)">
                             <n-icon size="20">
                               <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24"><path d="M15 16l-4 4h10v-4zm-2.94-8.81L3 16.25V20h3.75l9.06-9.06l-3.75-3.75zM5.92 18H5v-.92l7.06-7.06l.92.92L5.92 18zm12.79-9.96a.996.996 0 0 0 0-1.41l-2.34-2.34a1.001 1.001 0 0 0-1.41 0l-1.83 1.83l3.75 3.75l1.83-1.83z" fill="currentColor"></path></svg>
                             </n-icon>
@@ -386,7 +432,7 @@ onMounted(() => {
                       </n-tooltip>
                       <n-tooltip trigger="hover">
                         <template #trigger>
-                          <button type="button" class="footer-action-btn" @click.stop>
+                          <button type="button" class="footer-action-btn" @click="deleteResume(resume.id)">
                             <n-icon size="20">
                               <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32"><path d="M12 12h2v12h-2z" fill="currentColor"></path><path d="M18 12h2v12h-2z" fill="currentColor"></path><path d="M4 6v2h2v20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8h2V6zm4 22V8h16v20z" fill="currentColor"></path><path d="M12 2h8v2h-8z" fill="currentColor"></path></svg>
                             </n-icon>
@@ -420,6 +466,32 @@ onMounted(() => {
                   />
               </div>
             </div>
+
+            <n-modal v-model:show="showRenameModal" :closable="false">
+              <n-card
+                style="width: 600px"
+                title="模态框"
+                :bordered="false"
+                size="huge"
+                role="dialog"
+                aria-modal="true"
+              >
+
+                <n-form
+                  :model="renameForm"
+                  label-placement="top"
+                  :label-width="80"
+                >
+                  <n-form-item label="简历名字" path="newTitle">
+                    <n-input v-model:value="renameForm.newTitle" placeholder="输入简历名字" />
+                  </n-form-item>
+                </n-form>
+                <template #footer>
+                  <n-button @click="showRenameModal = false">取消</n-button>
+                  <n-button type="primary" @click="handleRenameConfirm">确认</n-button>
+                </template>
+              </n-card>
+            </n-modal>
           </div>
         </section>
       </main>

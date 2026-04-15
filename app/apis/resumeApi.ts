@@ -82,6 +82,15 @@ export const exportResumePdf = (resumeId: number, fileName: string) => {
   return downloadBlob(`/resumes/${resumeId}/export/pdf`, fileName)
 }
 
+export const renameResume = (resumeId: number, newTitle: string) => {
+  return useHttpPost(`renameResume:${resumeId}`, `/resumes/rename`, { $: true, body: { resumeId, newTitle } })
+}
+
+
+export const removeResume = (resumeId: number) => {
+  return useHttp(`removeResume:${resumeId}`, `/resumes/remove`, { method: 'DELETE', query: { resumeId }, $: true })
+}
+
 
 
 export const myResumesList = async (params: {pageNum: number, pageSize: number}) => {
