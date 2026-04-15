@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { resolveResumeDocumentTemplate } from '~/components/resume/documentTemplateRegistry'
 import ResumeBlockRenderer from '~/components/resume/ResumeBlockRenderer.vue'
 import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
 
@@ -31,12 +32,19 @@ const paperStyle = computed(() => {
 })
 const templateCode = computed(() => props.layout?.theme.templateCode || 'simple')
 const isTwoColumnTemplate = computed(() => templateCode.value === 'two-column')
+const documentTemplateComponent = computed(() => resolveResumeDocumentTemplate(templateCode.value))
 </script>
 
 <template>
   <div class="resume-document" :class="{ 'resume-document--print': printMode }" :style="paperStyle">
     <div class="resume-document__paper">
-      <div class="resume-document__content" :class="{ 'resume-document__content--two-column': isTwoColumnTemplate }">
+      <component
+        :is="documentTemplateComponent"
+        v-if="documentTemplateComponent"
+        :modules="modules"
+        :layout="layout"
+      />
+      <div v-else class="resume-document__content" :class="{ 'resume-document__content--two-column': isTwoColumnTemplate }">
         <div
           v-for="module in modules"
           :key="module.key"

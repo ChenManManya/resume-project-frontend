@@ -1,5 +1,16 @@
 import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
 import { useAccessToken } from '~/utils/authStorage'
+
+
+export interface ResumeOptimizeRequest {
+  resumeJson: Record<string, any>
+  modes?: string[]
+}
+
+export interface ResumeOptimizeResult {
+  content: Record<string, any>
+  style: Record<string, any>
+}
 export interface ResumeDetailPayload {
   resumeId: number
   currentVersionId: number
@@ -112,5 +123,11 @@ export const uploadPhoto = (photofile:File) => {
     method: 'POST',
     body:formdata,
     $:true,
+  })
+}
+
+export const optimizeResume = (data: ResumeOptimizeRequest) => {
+  return useHttpPost<ResumeOptimizeResult>('optimizeResume', '/resumes/optimize', {
+    body: data
   })
 }

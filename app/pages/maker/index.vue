@@ -6,10 +6,11 @@ definePageMeta({
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import WangRichTextField from '~/components/maker/WangRichTextField.client.vue'
 import ResumeBlockRenderer from '~/components/resume/ResumeBlockRenderer.vue'
+import ResumeDocument from '~/components/resume/ResumeDocument.vue'
 import draggable from 'vuedraggable'
 import CardType from '~/enums/cardEnum'
 import { createDefaultResumeLayout, createDefaultResumeModules } from '~/utils/resumeData'
-import { createResume, exportResumePdf, exportResumePng, getResumeDetail, saveResumeDraft, uploadPhoto, type ResumeDetailPayload } from '~/apis/resumeApi'
+import { createResume, optimizeResume, exportResumePdf, getResumeDetail, saveResumeDraft, uploadPhoto, type ResumeDetailPayload } from '~/apis/resumeApi'
 import type { ResumeLayoutConfig, ResumeModule, ResumePersonalModule, ResumeSectionModule } from '~/types/resume'
 import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui'
 type PageBreak = {
@@ -70,8 +71,11 @@ const exportOptions = [
 const templateOptions = [
   { label: '简约经典', value: 'simple' },
   { label: '双栏布局', value: 'two-column' },
-  { label: '卡片风格', value: 'card-style' }
+  { label: '卡片风格', value: 'card-style' },
+  { label: 'OpenResume 简洁一', value: 'open-simple-one-page-1' },
+  { label: 'OpenResume 简洁二', value: 'open-simple-one-page-2' }
 ]
+const usesDocumentTemplatePreview = computed(() => ['open-simple-one-page-1', 'open-simple-one-page-2'].includes(layoutConfig.value.theme.templateCode))
 const colorPalette = ['#2563eb', '#0f766e', '#7c3aed', '#dc2626', '#ea580c', '#111827']
 const layoutPresets = [
   {
@@ -541,6 +545,47 @@ const handleUploadFinish = ({ file }: { file: UploadFileInfo }) => {
     visibleModules.value[0].data.photo = file.url || visibleModules.value[0].data.photo
 }
 
+const handleResumeOptimization = async () => {
+  if (!resumeId.value) {
+    return
+  }
+
+  const loadingMessage = $message.loading('正在优化简历，请稍候...', {
+    duration: 0
+  })
+  try {
+
+    const resumeData = {
+      contentJson: {
+        modules: moduleList.value
+      },
+      layoutJson: {
+        ...layoutConfig.value,
+        moduleOrder: moduleList.value.map((module) => module.key),
+        hiddenModuleKeys: hiddenModuleKeys.value
+      }
+    }
+    const { data, error } = await optimizeResume({
+      resumeJson: resumeData,
+      modes: ['polish', 'correct', 'style']
+    })
+
+    if (error.value) {
+      $message.error(error.value || '简历优化失败，请稍后重试')
+      return
+    }
+    console.log('优化结果', data.value)
+    moduleList.value = data.value.content.modules
+    layoutConfig.value = data.value.style
+    $message.success('简历优化成功')
+  } catch {
+    $message.error('简历优化失败，请稍后重试')
+  } finally {
+    loadingMessage.destroy()
+  }
+}
+
+
 onMounted(async () => {
   try {
     await LoadResume()
@@ -901,9 +946,14 @@ watch(
               </template>
               <template #default>
                   <div style="width: 150px;">模块间距<n-slider v-model:value="layoutConfig.theme.sectionGap" :step="1" :min="8" :max="40" /></div>
-                  <!-- <div style="width: 150px;">页边距<n-slider v-model:value="layoutConfig.page.margin" :step="1" :min="8" :max="40" /></div> -->
               </template>
             </n-popover>
+            <n-tooltip trigger="hover">
+              <template #trigger>
+            <n-button dashed @click="handleResumeOptimization">优化简历</n-button>
+              </template>
+              模板样式
+            </n-tooltip>
             <n-tooltip trigger="hover">
               <template #trigger>
                  <n-select v-model:value="layoutConfig.theme.templateCode" :options="templateOptions" />
@@ -952,8 +1002,37 @@ watch(
         </div>
 
         <div class="preview-canvas">
+          <div v-if="usesDocumentTemplatePreview" class="document-preview-sorter">
+            <div class="document-preview-sorter__label">拖拽调整模块顺序</div>
+            <draggable
+              v-model="visibleModuleList"
+              item-key="key"
+              animation="200"
+              ghost-class="document-preview-sorter__ghost"
+              class="document-preview-sorter__list"
+            >
+              <template #item="{ element: module }">
+                <button
+                  type="button"
+                  class="document-preview-sorter__chip"
+                  :class="{ 'is-active': selectedModuleKey === module.key }"
+                  @click="selectModule(module.key)"
+                >
+                  <span class="document-preview-sorter__drag">⋮⋮</span>
+                  <span>{{ moduleLabel(module) }}</span>
+                </button>
+              </template>
+            </draggable>
+          </div>
+
           <div ref="previewRef" class="preview-paper" :style="previewPaperStyle">
+            <ResumeDocument
+              v-if="usesDocumentTemplatePreview"
+              :modules="visibleModuleList"
+              :layout="layoutConfig"
+            />
             <div
+              v-else
               v-for="item in pageBreaks"
               :key="item.id"
               class="page-break-indicator"
@@ -963,6 +1042,7 @@ watch(
             </div>
 
             <draggable
+              v-if="!usesDocumentTemplatePreview"
               v-model="visibleModuleList"
               item-key="key"
               animation="200"
@@ -1264,6 +1344,10 @@ watch(
   min-height: 0;
 }
 
+
+.editor-panel {
+  overflow:scroll;
+}
 .editor-panel__header,
 .preview-panel__toolbar {
   margin-bottom: 5px;
@@ -1303,6 +1387,56 @@ watch(
     font-size: 12px;
     color: #64748b;
   }
+}
+
+.document-preview-sorter {
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.document-preview-sorter__label {
+  margin-bottom: 10px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.document-preview-sorter__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.document-preview-sorter__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  cursor: grab;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+
+  &.is-active {
+    border-color: rgba(37, 99, 235, 0.28);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+  }
+}
+
+.document-preview-sorter__drag {
+  color: #94a3b8;
+  font-size: 12px;
+  letter-spacing: -0.1em;
+}
+
+.document-preview-sorter__ghost {
+  opacity: 0.45;
 }
 
 .preview-layout-toolbar__presets,
@@ -1490,7 +1624,6 @@ label {
   position: relative;
   width: 210mm;
   min-height: 297mm;
-  margin: 0 auto;
   padding: 10mm;
   background: #fff;
   box-shadow: 0 16px 42px rgba(15, 23, 42, 0.08);

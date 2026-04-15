@@ -60,15 +60,13 @@ const emptyTemplateData = (): TemplatePayload => ({
   defaultContentJson: ''
 })
 
-// const { data: templateDetail, refresh: refreshTemplateDetail } = await useAsyncData(
-//   `template-detail:${templateId.value}`,
-//   async () => {
-//     const { data } = await getTemplateDetails(ensureValidTemplateId(templateId.value))
-//     return data.value ?? emptyTemplateData()
-//   }
-// )
-
-const { data: templateDetail } = await getTemplateDetails(ensureValidTemplateId(templateId.value))
+const { data: templateDetail, refresh: refreshTemplateDetail } = await useAsyncData(
+  () => `template-detail:${templateId.value}`,
+  async () => {
+    const { data } = await getTemplateDetails(ensureValidTemplateId(templateId.value))
+    return data.value ?? emptyTemplateData()
+  }
+)
 
 const { data: recommendTemplates, refresh: refreshRecommendTemplates } = await useAsyncData(
   `template-recommend:${templateId.value}`,
