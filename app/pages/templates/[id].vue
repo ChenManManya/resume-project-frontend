@@ -219,7 +219,9 @@ watch(templateId, async (nextId, previousId) => {
 onMounted(async () => {
   await loadFavoriteStatus()
 })
-
+useHead({
+  title: `${templateData.value.name} - 模板详情 - 慢慢简历`
+})
 </script>
 
 <template>

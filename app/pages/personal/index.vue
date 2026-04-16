@@ -33,6 +33,10 @@ const avatarfileList = ref<UploadFileInfo[]>([
 
 ])
 
+useHead({
+  title: '个人中心 - 慢慢简历'
+})
+
 const profile = reactive({
   id: '',
   username: '',

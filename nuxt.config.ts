@@ -40,6 +40,16 @@ export default defineNuxtConfig({
   build: {
     transpile: ['naive-ui', 'vueuc']
   },
+  app: {
+    head: {
+      title: '慢慢简历 - 在线简历生成器',
+      meta: [
+        { name: 'description', content: '一个在线简历生成器，帮助用户快速创建专业的简历。' },
+        { name: 'keywords', content: '在线简历生成器, 简历模板, 简历设计, 简历制作' },
+        { name: 'author', content: '陈慢慢' }
+      ]
+    }
+  },
 
   vite: {
     plugins: [

@@ -667,6 +667,11 @@ watch(
   },
   { deep: true }
 )
+
+useHead({
+  title: '简历编辑 - 慢慢简历'
+})
+
 </script>
 
 <template>

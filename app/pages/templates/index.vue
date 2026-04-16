@@ -336,7 +336,16 @@ const handlePageChange = (page: number) => {
   })
 }
 
+useHead({
+  title: '模板库 - 慢慢简历'
 
+})
+
+useSeoMeta({
+  title: '模板库 - 慢慢简历',
+  description: '浏览和选择适合你的简历模板，快速创建专业的简历。',
+  keywords: '简历模板, 在线简历, 简历设计, 简历制作'
+})
 </script>
 
 <template>

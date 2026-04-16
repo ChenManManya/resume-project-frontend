@@ -39,7 +39,7 @@ const documentData = computed(() => toOpenResumeSimpleDocument(props.modules, pr
 .open-simple-one-page-2 { width: 100%; min-height: 100%; display: flex; background: #fff; font-size: 15px; line-height: 1.75; }
 .left { width: 240px; flex-shrink: 0; background: #0f172a; color: #f8fafc; padding: 64px 24px 32px; }
 .left > * + * { margin-top: 28px; }
-.sidebar-item h3, .title { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.1); color: inherit; font-size: 14px; font-weight: 700; }
+.sidebar-item h3, .title { display: inline-flex; align-items: center; padding: 4px 12px;  background: rgba(255,255,255,.1); color: inherit; font-size: 14px; font-weight: 700; }
 .labels { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .right { flex: 1; min-width: 0; padding: 42px 38px; }
 .header .hello { font-size: 40px; font-weight: 800; color: var(--open-primary, #2563eb); }
