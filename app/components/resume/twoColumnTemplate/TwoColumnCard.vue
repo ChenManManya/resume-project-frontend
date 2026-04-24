@@ -63,25 +63,28 @@ const cardDisplayConfig = computed(() => {
 
 <style scoped lang="scss">
 .two-column-card {
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 1));
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(248, 250, 252, 0.94));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
   break-inside: avoid;
   page-break-inside: avoid;
 }
 
 .two-column-card__header {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 
   span {
     display: inline-flex;
     align-items: center;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 999px;
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(37, 99, 235, 0.08);
     color: var(--resume-primary-color, #2563eb);
-    font-size: calc(var(--resume-body-size, 13px) - 1px);
+    font-size: calc(var(--resume-body-size, 13px) - 0.5px);
     font-weight: 700;
     letter-spacing: 0.05em;
   }
@@ -93,13 +96,17 @@ const cardDisplayConfig = computed(() => {
   gap: 14px;
 }
 
+.two-column-card__item {
+  padding: 14px 0 0;
+}
+
 .two-column-card__item + .two-column-card__item {
-  padding-top: 14px;
-  border-top: 1px dashed rgba(148, 163, 184, 0.3);
+  border-top: 1px dashed rgba(148, 163, 184, 0.28);
 }
 
 .two-column-card__main {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
@@ -110,6 +117,8 @@ const cardDisplayConfig = computed(() => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: baseline;
+  min-width: 0;
+  flex: 1;
 
   strong {
     font-size: calc(var(--resume-body-size, 13px) + 1px);
@@ -128,15 +137,24 @@ const cardDisplayConfig = computed(() => {
   font-size: var(--resume-body-size, 13px);
 }
 
+.two-column-card__date {
+  flex-shrink: 0;
+  text-align: right;
+  max-width: 100%;
+  word-break: break-word;
+}
+
 .two-column-card__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
   margin-top: 6px;
+  word-break: break-word;
 
   a {
     color: var(--resume-primary-color, #2563eb);
     text-decoration: none;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -144,12 +162,23 @@ const cardDisplayConfig = computed(() => {
   margin-top: 8px;
   color: #111827;
   line-height: var(--resume-line-height, 1.7);
+  word-break: break-word;
 
   :deep(p) { margin: 0 0 8px; }
   :deep(ul),
   :deep(ol) {
     margin: 0;
     padding-left: 20px;
+  }
+}
+
+@media (max-width: 720px) {
+  .two-column-card__main {
+    flex-direction: column;
+  }
+
+  .two-column-card__date {
+    text-align: left;
   }
 }
 </style>

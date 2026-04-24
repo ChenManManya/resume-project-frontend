@@ -43,11 +43,13 @@ const props = withDefaults(defineProps<{ personalInfo: PersonalInfo }>(), {
 
 <style scoped lang="scss">
 .card-style-personal {
-  padding: 20px 22px;
-  border-radius: 26px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
-  border: 1px solid rgba(148,163,184,0.18);
-  box-shadow: 0 16px 32px rgba(15,23,42,0.06);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 22px 24px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.94));
+  border: 1px solid rgba(148,163,184,0.16);
+  box-shadow: 0 18px 34px rgba(15,23,42,0.07);
 }
 
 .card-style-personal__head {
@@ -55,6 +57,7 @@ const props = withDefaults(defineProps<{ personalInfo: PersonalInfo }>(), {
   align-items: center;
   gap: 18px;
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 .card-style-personal__photo {
@@ -68,8 +71,11 @@ const props = withDefaults(defineProps<{ personalInfo: PersonalInfo }>(), {
 }
 
 .card-style-personal__identity {
-  h1 { margin: 0; font-size: calc(var(--resume-title-size, 24px) + 4px); color: #0f172a; }
-  p { margin: 8px 0 0; color: var(--resume-primary-color, #2563eb); font-size: calc(var(--resume-body-size, 13px) + 2px); font-weight: 600; }
+  min-width: 0;
+  flex: 1;
+
+  h1 { margin: 0; font-size: calc(var(--resume-title-size, 24px) + 4px); color: #0f172a; word-break: break-word; }
+  p { margin: 8px 0 0; color: var(--resume-primary-color, #2563eb); font-size: calc(var(--resume-body-size, 13px) + 2px); font-weight: 700; word-break: break-word; }
 }
 
 .card-style-personal__meta {
@@ -89,5 +95,11 @@ const props = withDefaults(defineProps<{ personalInfo: PersonalInfo }>(), {
   &--full { grid-column: 1 / -1; }
   span { color: #64748b; font-size: 12px; }
   strong { color: #0f172a; font-size: var(--resume-body-size, 13px); word-break: break-word; }
+}
+
+@media (max-width: 720px) {
+  .card-style-personal__meta {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

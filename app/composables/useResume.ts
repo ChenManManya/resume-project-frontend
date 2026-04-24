@@ -8,6 +8,7 @@ export const useResume = () => {
     const createResumeWithTemplate = async (templateId: number) => {
         message.loading('正在创建简历...')
         const { data, error } = await createResume({ templateId, title: '我的简历' })
+        console.log('createResumeWithTemplate', data, error)
         if (error.value) {
             message.error('简历创建失败!')
             return

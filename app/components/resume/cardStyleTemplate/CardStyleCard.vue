@@ -62,11 +62,13 @@ const cardDisplayConfig = computed(() => {
 <style scoped lang="scss">
 .card-style-card {
   position: relative;
-  padding: 18px 20px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px 22px;
   border-radius: 24px;
-  background: #fff;
-  border: 1px solid rgba(226,232,240,0.92);
-  box-shadow: 0 18px 32px rgba(15,23,42,0.05);
+  background: linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,0.92));
+  border: 1px solid rgba(226,232,240,0.88);
+  box-shadow: 0 18px 30px rgba(15,23,42,0.05);
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -79,14 +81,15 @@ const cardDisplayConfig = computed(() => {
 .card-style-card__list { display: flex; flex-direction: column; gap: 14px; }
 
 .card-style-card__item {
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(248,250,252,0.78), rgba(255,255,255,0.96));
-  border: 1px solid rgba(226,232,240,0.9);
+  background: linear-gradient(180deg, rgba(248,250,252,0.86), rgba(255,255,255,0.98));
+  border: 1px solid rgba(226,232,240,0.86);
 }
 
 .card-style-card__top {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
@@ -97,6 +100,8 @@ const cardDisplayConfig = computed(() => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: baseline;
+  min-width: 0;
+  flex: 1;
   strong { color: #111827; font-size: calc(var(--resume-body-size, 13px) + 2px); }
   span { color: #64748b; }
 }
@@ -104,20 +109,39 @@ const cardDisplayConfig = computed(() => {
 .card-style-card__date,
 .card-style-card__meta { color: #64748b; font-size: var(--resume-body-size, 13px); }
 
+.card-style-card__date {
+  flex-shrink: 0;
+  text-align: right;
+  max-width: 100%;
+  word-break: break-word;
+}
+
 .card-style-card__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
   margin-top: 6px;
-  a { color: var(--resume-primary-color, #2563eb); text-decoration: none; }
+  word-break: break-word;
+  a { color: var(--resume-primary-color, #2563eb); text-decoration: none; overflow-wrap: anywhere; }
 }
 
 .card-style-card__content {
   margin-top: 10px;
   color: #111827;
   line-height: var(--resume-line-height, 1.7);
+  word-break: break-word;
   :deep(p) { margin: 0 0 8px; }
   :deep(ul),
   :deep(ol) { margin: 0; padding-left: 20px; }
+}
+
+@media (max-width: 720px) {
+  .card-style-card__top {
+    flex-direction: column;
+  }
+
+  .card-style-card__date {
+    text-align: left;
+  }
 }
 </style>

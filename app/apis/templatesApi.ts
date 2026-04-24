@@ -1,5 +1,8 @@
 export interface TemplatePayload {
     id: number
+    code?: string
+    templateCode?: string
+    template_code?: string
     name: string
     description: string
     tags: string[]

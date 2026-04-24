@@ -77,10 +77,8 @@ onMounted(() => {
       <section class="login-hero">
         <NuxtLink class="login-back" to="/">返回首页</NuxtLink>
         <span class="login-kicker">慢慢简历</span>
-        <h1>登录后继续整理你的简历内容，并在任意设备上接着编辑。</h1>
-        <p>
-          这是一套偏产品化的登录界面，延续你当前站点的浅蓝、柔和阴影与卡片语言，适合后续直接接入短信、邮箱或账号密码登录。
-        </p>
+        <h1>请先登录您的账号</h1>
+        <p>登录后您可以继续编辑您的简历，所有内容都将自动保存到云端，随时随地访问和修改。</p>
 
         <div class="login-feature-list">
           <div v-for="feature in features" :key="feature" class="login-feature">

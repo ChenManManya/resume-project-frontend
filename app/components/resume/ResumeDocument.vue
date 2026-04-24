@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { resolveResumeDocumentTemplate } from '~/components/resume/documentTemplateRegistry'
 import ResumeBlockRenderer from '~/components/resume/ResumeBlockRenderer.vue'
 import type { ResumeLayoutConfig, ResumeModule } from '~/types/resume'
+import CardType from '~/enums/cardEnum'
 
 const props = withDefaults(
   defineProps<{
@@ -33,6 +34,25 @@ const paperStyle = computed(() => {
 const templateCode = computed(() => props.layout?.theme.templateCode || 'simple')
 const isTwoColumnTemplate = computed(() => templateCode.value === 'two-column')
 const documentTemplateComponent = computed(() => resolveResumeDocumentTemplate(templateCode.value))
+const twoColumnModules = computed(() => {
+  const personal = props.modules.find((module) => module.type === 'personal') ?? null
+  const sections = props.modules.filter((module) => module.type !== 'personal')
+  const left: ResumeModule[] = []
+  const right: ResumeModule[] = []
+
+  sections.forEach((module) => {
+    if (
+      module.type === 'section' &&
+      (module.cardType === CardType.WORK || module.cardType === CardType.PROJECT || module.key === 'work' || module.key === 'project')
+    ) {
+      right.push(module)
+    } else {
+      left.push(module)
+    }
+  })
+
+  return { personal, left, right }
+})
 </script>
 
 <template>
@@ -44,6 +64,45 @@ const documentTemplateComponent = computed(() => resolveResumeDocumentTemplate(t
         :modules="modules"
         :layout="layout"
       />
+      <div v-else-if="isTwoColumnTemplate" class="resume-document__content resume-document__content--two-column-layout">
+        <div
+          v-if="twoColumnModules.personal"
+          class="resume-document__module resume-document__module--personal-banner"
+        >
+          <ResumeBlockRenderer
+            :module="twoColumnModules.personal"
+            :template-code="templateCode"
+          />
+        </div>
+
+        <div class="resume-document__columns">
+          <div class="resume-document__column">
+            <div
+              v-for="module in twoColumnModules.left"
+              :key="module.key"
+              class="resume-document__module"
+            >
+              <ResumeBlockRenderer
+                :module="module"
+                :template-code="templateCode"
+              />
+            </div>
+          </div>
+
+          <div class="resume-document__column">
+            <div
+              v-for="module in twoColumnModules.right"
+              :key="module.key"
+              class="resume-document__module"
+            >
+              <ResumeBlockRenderer
+                :module="module"
+                :template-code="templateCode"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
       <div v-else class="resume-document__content" :class="{ 'resume-document__content--two-column': isTwoColumnTemplate }">
         <div
           v-for="module in modules"
@@ -110,6 +169,30 @@ const documentTemplateComponent = computed(() => resolveResumeDocumentTemplate(t
   grid-column: 1 / -1;
 }
 
+.resume-document__content--two-column-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--resume-section-gap);
+}
+
+.resume-document__module--personal-banner {
+  width: 100%;
+}
+
+.resume-document__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: calc(var(--resume-section-gap) + 4px);
+  align-items: start;
+}
+
+.resume-document__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--resume-section-gap);
+  min-width: 0;
+}
+
 .resume-document--print .resume-document__paper {
   margin: 0;
   box-shadow: none;
@@ -132,6 +215,10 @@ const documentTemplateComponent = computed(() => resolveResumeDocumentTemplate(t
 
   .resume-document__content--two-column {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .resume-document__columns {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   }
 }
 </style>

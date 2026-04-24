@@ -18,6 +18,14 @@ type PageBreak = {
   pageNumber: number
   top: number
 }
+
+type ResumeOptimizeMode = 'polish' | 'correct' | 'expand' | 'style'
+
+interface ResumeOptimizeModeOption {
+  value: ResumeOptimizeMode
+  label: string
+  description: string
+}
 const isEditingTitle = ref(false)
 const moduleList = ref<ResumeModule[]>(createDefaultResumeModules())
 const railCollapsed = ref(false)
@@ -62,6 +70,18 @@ const handlePredefinedUpdateShow = (show: boolean) => {
 const showGapPopover = ref(false)
 const handleGapUpdateShow = (show: boolean) => {
 
+}
+const showOptimizePopover = ref(false)
+const optimizeState = ref<'idle' | 'optimizing'>('idle')
+const optimizeModeOptions: ResumeOptimizeModeOption[] = [
+  { value: 'polish', label: 'polish', description: '润色表达，使语言更专业' },
+  { value: 'correct', label: 'correct', description: '纠正错别字、语病、格式问题' },
+  { value: 'expand', label: 'expand', description: '适度扩写，但不得虚构' },
+  { value: 'style', label: 'style', description: '优化样式与排版配置' }
+]
+const selectedOptimizeModes = ref<ResumeOptimizeMode[]>(['polish', 'correct', 'style'])
+const handleOptimizeUpdateShow = (show: boolean) => {
+  showOptimizePopover.value = show
 }
 const isBootstrapping = ref(true)
 let saveTimer: ReturnType<typeof setTimeout> | null = null
@@ -550,6 +570,17 @@ const handleResumeOptimization = async () => {
     return
   }
 
+  if (optimizeState.value === 'optimizing') {
+    return
+  }
+
+  if (!selectedOptimizeModes.value.length) {
+    $message.warning('请至少选择一种优化方式')
+    return
+  }
+
+  optimizeState.value = 'optimizing'
+  showOptimizePopover.value = false
   const loadingMessage = $message.loading('正在优化简历，请稍候...', {
     duration: 0
   })
@@ -567,7 +598,7 @@ const handleResumeOptimization = async () => {
     }
     const { data, error } = await optimizeResume({
       resumeJson: resumeData,
-      modes: ['polish', 'correct', 'style']
+      modes: [...selectedOptimizeModes.value]
     })
 
     if (error.value) {
@@ -581,6 +612,7 @@ const handleResumeOptimization = async () => {
   } catch {
     $message.error('简历优化失败，请稍后重试')
   } finally {
+    optimizeState.value = 'idle'
     loadingMessage.destroy()
   }
 }
@@ -953,12 +985,49 @@ useHead({
                   <div style="width: 150px;">模块间距<n-slider v-model:value="layoutConfig.theme.sectionGap" :step="1" :min="8" :max="40" /></div>
               </template>
             </n-popover>
-            <n-tooltip trigger="hover">
+            <n-popover
+              :show="showOptimizePopover"
+              placement="bottom"
+              trigger="manual"
+              @update:show="handleOptimizeUpdateShow"
+            >
               <template #trigger>
-            <n-button dashed @click="handleResumeOptimization">优化简历</n-button>
+                <n-button dashed @click="showOptimizePopover = !showOptimizePopover">优化简历</n-button>
               </template>
-              模板样式
-            </n-tooltip>
+              <template #default>
+                <div class="optimize-popover">
+                  <div class="optimize-popover__header">
+                    <strong>选择优化方式</strong>
+                    <span>可多选，至少选择一项</span>
+                  </div>
+                  <n-checkbox-group v-model:value="selectedOptimizeModes">
+                    <div class="optimize-popover__options">
+                      <label
+                        v-for="mode in optimizeModeOptions"
+                        :key="mode.value"
+                        class="optimize-popover__option"
+                      >
+                        <n-checkbox :value="mode.value">
+                          <span class="optimize-popover__option-label">{{ mode.label }}</span>
+                        </n-checkbox>
+                        <p>{{ mode.description }}</p>
+                      </label>
+                    </div>
+                  </n-checkbox-group>
+                  <div class="optimize-popover__actions">
+                    <n-button size="small" @click="showOptimizePopover = false">取消</n-button>
+                    <n-button
+                      size="small"
+                      type="primary"
+                      :loading="optimizeState === 'optimizing'"
+                      @click="handleResumeOptimization"
+                    >
+                      开始优化
+                    </n-button>
+                  </div>
+                </div>
+              </template>
+            </n-popover>
             <n-tooltip trigger="hover">
               <template #trigger>
                  <n-select v-model:value="layoutConfig.theme.templateCode" :options="templateOptions" />
@@ -1458,6 +1527,63 @@ useHead({
   gap: 8px;
 }
 
+.optimize-popover {
+  width: min(320px, 80vw);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optimize-popover__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  strong {
+    color: #0f172a;
+    font-size: 14px;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+}
+
+.optimize-popover__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.optimize-popover__option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+.optimize-popover__option-label {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.optimize-popover__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 
 
 .color-dot {
@@ -1632,17 +1758,22 @@ label {
   padding: 10mm;
   background: #fff;
   box-shadow: 0 16px 42px rgba(15, 23, 42, 0.08);
+  font-family: var(--resume-font-family, "PingFang SC", "Microsoft YaHei", sans-serif);
+  font-size: var(--resume-body-size, 13px);
+  line-height: var(--resume-line-height, 1.7);
 }
 
 .preview-block-list {
   display: flex;
   flex-direction: column;
+  gap: var(--resume-section-gap, 20px);
+  width: 100%;
 }
 
 .preview-block-list--two-column {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+   gap: var(--resume-section-gap, 20px);
   align-items: start;
 }
 
@@ -1655,10 +1786,6 @@ label {
   border-radius: 12px;
   padding: 6px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  & + .preview-block {
-    margin-top: 14px;
-  }
 
   &.is-active {
     border-color: rgba(37, 99, 235, 0.24);

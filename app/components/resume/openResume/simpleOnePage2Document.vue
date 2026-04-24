@@ -21,6 +21,9 @@ const documentData = computed(() => toOpenResumeSimpleDocument(props.modules, pr
     </aside>
     <section class="right">
       <header class="header">
+        <div v-if="documentData.photo" class="photo">
+          <img :src="documentData.photo" :alt="documentData.name || '头像'" />
+        </div>
         <div class="hello">HELLO<span>°</span></div>
         <div class="name">我是{{ documentData.name }}</div>
       </header>
@@ -42,6 +45,21 @@ const documentData = computed(() => toOpenResumeSimpleDocument(props.modules, pr
 .sidebar-item h3, .title { display: inline-flex; align-items: center; padding: 4px 12px;  background: rgba(255,255,255,.1); color: inherit; font-size: 14px; font-weight: 700; }
 .labels { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .right { flex: 1; min-width: 0; padding: 42px 38px; }
+.photo {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid rgba(37, 99, 235, 0.12);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
 .header .hello { font-size: 40px; font-weight: 800; color: var(--open-primary, #2563eb); }
 .header .name { margin-top: 6px; font-size: 28px; font-weight: 700; color: #111827; }
 .title { margin-top: 32px; background: rgba(15,23,42,.06); color: var(--open-primary, #2563eb); }

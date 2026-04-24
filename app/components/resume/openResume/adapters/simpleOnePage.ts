@@ -15,6 +15,7 @@ interface OpenResumeWorkingItem {
 
 export interface OpenResumeSimpleDocumentData {
   name: string
+  photo: string
   city: string
   phoneNumber: string
   email: string
@@ -85,6 +86,7 @@ export const toOpenResumeSimpleDocument = (modules: ResumeModule[], layout?: Res
 
   return {
     name: personal?.name || '未命名',
+    photo: personal?.photo || '',
     city: personal?.address || '',
     phoneNumber: personal?.phone || '',
     email: personal?.email || '',

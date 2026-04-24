@@ -47,8 +47,9 @@ interface SaveDraftRequest {
 }
 
 export const createResume = (payload: CreateResumeRequest) => {
-  return useHttpPost<ResumeDetailPayload>('resumes', '/resumes', {
-    body: payload
+  return useHttpPost<ResumeDetailPayload>('create_resumes', '/resumes', {
+    body: payload,
+    $: true
   })
 }
 
@@ -128,6 +129,7 @@ export const uploadPhoto = (photofile:File) => {
 
 export const optimizeResume = (data: ResumeOptimizeRequest) => {
   return useHttpPost<ResumeOptimizeResult>('optimizeResume', '/resumes/optimize', {
-    body: data
+    body: data,
+    $: true
   })
 }

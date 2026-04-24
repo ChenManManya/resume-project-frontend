@@ -471,6 +471,8 @@ useSeoMeta({
   color: #334155;
   padding: 9px 14px;
   font-size: 13px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 
   &:hover {
     transform: translateY(-1px);
@@ -562,6 +564,11 @@ useSeoMeta({
   flex-direction: row;
   padding: 10px 0 0 0;
   gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .templates-search-bar {

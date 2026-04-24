@@ -45,6 +45,12 @@ const parseJson = <T>(value: unknown): T | null => {
   }
 }
 
+const resolveTemplateCode = (template: TemplatePayload, fallback: string) => {
+  const candidates = [template.templateCode, template.template_code, template.code]
+  const matched = candidates.find((item) => typeof item === 'string' && item.trim())
+  return matched?.trim() || fallback
+}
+
 const isFavoriteTemplate:any = ref<Boolean>(false);
 
 const emptyTemplateData = (): TemplatePayload => ({
@@ -83,7 +89,7 @@ const resolveAssetUrl = (url?: string) => {
     return url
   }
 
-  if (/^http?:\/\//.test(url) || url.startsWith('data:')) {
+  if (/^https?:\/\//.test(url) || url.startsWith('data:')) {
     return url
   }
 
@@ -122,13 +128,21 @@ const previewModules = computed<ResumeModule[]>(() => {
 
 const previewLayout = computed<ResumeLayoutConfig>(() => {
   const base = createDefaultResumeLayout()
-  const style = parseJson<{ modules?: ResumeModule[] }>(templateData.value.styleJson)
+  const style = parseJson<Partial<ResumeLayoutConfig>>(templateData.value.styleJson)
+  const styleThemeCodeCandidates = [
+    style?.theme?.templateCode,
+    (style?.theme as Record<string, unknown> | undefined)?.template_code,
+    (style?.theme as Record<string, unknown> | undefined)?.code
+  ]
+  const styleThemeTemplateCode = styleThemeCodeCandidates.find((item) => typeof item === 'string' && item.trim()) as string | undefined
+  const templateCodeFallback = resolveTemplateCode(templateData.value, styleThemeTemplateCode?.trim() || base.theme.templateCode)
   console.log('解析模板样式', style)
   if (!style) {
     return {
       ...base,
       theme: {
         ...base.theme,
+        templateCode: templateCodeFallback,
         primaryColor: selectedThemeColor.value || base.theme.primaryColor
       }
     }
@@ -139,7 +153,8 @@ const previewLayout = computed<ResumeLayoutConfig>(() => {
     ...style,
     theme: {
       ...base.theme,
-      ...(style.theme ?? {})
+      ...(style.theme ?? {}),
+      templateCode: templateCodeFallback
     },
     page: {
       ...base.page,
@@ -178,8 +193,8 @@ const requireAuth = async (action: () => void | Promise<void>) => {
 
 
 const { createResumeWithTemplate } = useResume()
-const handleCreateTemplate = () => {
-  createResumeWithTemplate(templateId.value)
+const handleCreateTemplate = async () => {
+  await createResumeWithTemplate(templateId.value)
 }
 
 const handleCreateTemplateWithAuth = async () => {
